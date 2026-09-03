@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Receipt · Store Finance</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="receipt-page">
+    <div class="receipt-actions no-print">
+      <a href="/sales.html" class="btn secondary" style="display:inline-block;padding:9px 16px;border-radius:6px;background:#e5e7eb;color:#1c2430;">&larr; Back</a>
+      <button id="print-btn">Print / Save as PDF</button>
+    </div>
+    <div id="msg-box"></div>
+    <div class="receipt" id="receipt"></div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/receipt.js"></script>
+</body>
+</html>

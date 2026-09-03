@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales · Store Finance</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Sales</h1>
+      </header>
+
+      <div id="msg-box"></div>
+
+      <div class="panel">
+        <h3>New Sale</h3>
+        <div class="form-row">
+          <div class="field"><label>Customer name (optional)</label><input id="customer_name" /></div>
+          <div class="field">
+            <label>Payment method</label>
+            <select id="payment_method">
+              <option value="cash">Cash</option>
+              <option value="card">Card</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="credit">Credit</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label>Scan barcode</label>
+            <div style="display:flex;gap:8px;">
+              <input id="barcode-input" placeholder="Scan or type barcode, then Enter" autocomplete="off" style="flex:1;" />
+              <button type="button" class="secondary" id="camera-scan-btn" style="white-space:nowrap;">Scan with Camera</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label>Product</label>
+            <select id="line-product"></select>
+          </div>
+          <div class="field"><label>Quantity</label><input id="line-qty" type="number" min="0.01" step="0.01" value="1" /></div>
+          <div class="field"><label>Unit Price</label><input id="line-price" type="number" min="0" step="0.01" /></div>
+          <div class="field" style="display:flex;align-items:flex-end;">
+            <button type="button" id="add-line-btn">Add Item</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th><th></th></tr></thead>
+            <tbody id="cart-body"></tbody>
+          </table>
+        </div>
+        <p style="text-align:right;font-size:1.1rem;"><strong>Total: <span id="cart-total">0.00</span></strong></p>
+        <button type="button" id="submit-sale-btn">Complete Sale</button>
+        <div id="last-sale-box"></div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>Recent Sales</h3>
+          <button type="button" class="secondary" id="export-sales-btn">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Invoice</th><th>Customer</th><th>Payment</th><th>Total</th><th>Date</th><th></th></tr></thead>
+            <tbody id="sales-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/barcode-scanner.js"></script>
+  <script src="/js/sales.js"></script>
+</body>
+</html>

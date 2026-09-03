@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard · Store Finance</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Dashboard</h1>
+      </header>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-icon">💵</div><div class="label">Today's Sales</div><div class="value" id="kpi-today-sales">-</div></div>
+        <div class="kpi-card good"><div class="kpi-icon">📈</div><div class="label">Month Revenue</div><div class="value" id="kpi-month-revenue">-</div></div>
+        <div class="kpi-card bad"><div class="kpi-icon">📉</div><div class="label">Month Expenses</div><div class="value" id="kpi-month-expenses">-</div></div>
+        <div class="kpi-card" id="kpi-net-profit-card"><div class="kpi-icon">💰</div><div class="label">Month Net Profit</div><div class="value" id="kpi-net-profit">-</div></div>
+        <div class="kpi-card warn"><div class="kpi-icon">📦</div><div class="label">Low Stock Items</div><div class="value" id="kpi-low-stock">-</div></div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="panel">
+          <h3>Sales Trend (last 14 days)</h3>
+          <canvas id="sales-trend-chart" height="90"></canvas>
+        </div>
+        <div class="panel">
+          <h3>Expenses by Category (this month)</h3>
+          <canvas id="expense-breakdown-chart" height="90"></canvas>
+          <p id="expense-breakdown-empty" class="hidden" style="text-align:center;color:var(--text-muted);font-size:13px;margin-top:12px;">No expenses recorded this month</p>
+        </div>
+      </div>
+
+      <div class="panel hidden" id="revenue-by-branch-panel">
+        <h3>Revenue by Branch (this month)</h3>
+        <canvas id="revenue-by-branch-chart" height="80"></canvas>
+      </div>
+
+      <div class="panel hidden" id="branches-overview-panel">
+        <h3 id="branches-overview-title">Branch Overview</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Branch</th>
+                <th>Today's Sales</th>
+                <th>Month Revenue</th>
+                <th>Month Expenses</th>
+                <th>Net Profit</th>
+                <th>Stock Value</th>
+                <th>Low Stock Items</th>
+              </tr>
+            </thead>
+            <tbody id="branches-overview-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Recent Sales</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Invoice</th><th>Cashier</th><th>Total</th><th>Date</th></tr></thead>
+            <tbody id="recent-sales-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

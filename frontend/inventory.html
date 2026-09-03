@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory · Store Finance</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Inventory</h1>
+      </header>
+
+      <div id="msg-box"></div>
+
+      <div class="panel" id="product-form-panel">
+        <h3 id="form-title">Add Product</h3>
+        <form id="product-form">
+          <input type="hidden" id="product-id" />
+          <div class="form-row">
+            <div class="field"><label>SKU</label><input id="sku" required /></div>
+            <div class="field"><label>Barcode</label><input id="barcode" placeholder="optional" /></div>
+            <div class="field"><label>Name</label><input id="name" required /></div>
+            <div class="field"><label>Category</label><input id="category" /></div>
+            <div class="field"><label>Unit</label><input id="unit" value="pcs" /></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Cost Price</label><input id="cost_price" type="number" step="0.01" min="0" required /></div>
+            <div class="field"><label>Sell Price</label><input id="sell_price" type="number" step="0.01" min="0" required /></div>
+            <div class="field"><label>Opening Qty</label><input id="quantity_on_hand" type="number" step="0.01" min="0" value="0" /></div>
+            <div class="field"><label>Reorder Level</label><input id="reorder_level" type="number" step="0.01" min="0" value="0" /></div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>Variant of (optional)</label>
+              <select id="parent_product_id"><option value="">— standalone product —</option></select>
+            </div>
+            <div class="field"><label>Variant attributes</label><input id="variant_attributes" placeholder="e.g. Size: M, Color: Red" /></div>
+          </div>
+          <button type="submit" id="submit-btn">Save Product</button>
+          <button type="button" class="secondary hidden" id="cancel-edit-btn">Cancel</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>Products</h3>
+          <button type="button" class="secondary" id="export-products-btn">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>SKU</th><th>Barcode</th><th>Name</th><th>Category</th><th>Cost</th><th>Sell</th>
+                <th>Qty on Hand</th><th>Reorder Lvl</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="products-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel" id="adjustment-panel">
+        <h3>Adjust Stock</h3>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:-8px;">
+          For stocktakes, damage, loss or other corrections not tied to a purchase or sale.
+        </p>
+        <form id="adjustment-form">
+          <div class="form-row">
+            <div class="field">
+              <label>Product</label>
+              <select id="adj-product" required></select>
+            </div>
+            <div class="field"><label>Quantity change (+ in / − out)</label><input id="adj-quantity" type="number" step="0.01" required /></div>
+            <div class="field"><label>Reason / note</label><input id="adj-note" placeholder="e.g. damaged, stocktake correction" /></div>
+          </div>
+          <button type="submit">Record Adjustment</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>Stock Movements</h3>
+          <button type="button" class="secondary" id="export-movements-btn">Export CSV</button>
+        </div>
+        <div class="form-row no-print">
+          <div class="field">
+            <label>Product</label>
+            <select id="mv-filter-product"><option value="">All products</option></select>
+          </div>
+          <div class="field"><label>Type</label>
+            <select id="mv-filter-type">
+              <option value="">All types</option>
+              <option value="purchase">Purchase</option>
+              <option value="sale">Sale</option>
+              <option value="adjustment">Adjustment</option>
+            </select>
+          </div>
+          <div class="field"><label>Start date</label><input id="mv-start-date" type="date" /></div>
+          <div class="field"><label>End date</label><input id="mv-end-date" type="date" /></div>
+          <div class="field" style="display:flex;align-items:flex-end;"><button type="button" id="mv-filter-btn">Filter</button></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Product</th><th>Type</th><th>Change</th><th>Balance After</th><th>Reference</th><th>Note</th><th>By</th>
+              </tr>
+            </thead>
+            <tbody id="movements-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/inventory.js"></script>
+</body>
+</html>

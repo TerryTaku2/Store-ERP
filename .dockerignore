@@ -1,0 +1,10 @@
+.git
+.claude
+ngrok.exe
+backend/.venv
+backend/__pycache__
+backend/store.db
+backend/store.db.bak
+**/__pycache__
+*.pyc
+*.log

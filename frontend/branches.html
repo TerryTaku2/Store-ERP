@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Branches · Store Finance</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Branches</h1>
+      </header>
+
+      <div id="msg-box"></div>
+
+      <div class="panel">
+        <h3>Add Branch</h3>
+        <form id="branch-form">
+          <div class="form-row">
+            <div class="field"><label>Name</label><input id="branch-name" required /></div>
+            <div class="field"><label>Code</label><input id="branch-code" required /></div>
+            <div class="field"><label>Address</label><input id="branch-address" /></div>
+            <div class="field"><label>Phone</label><input id="branch-phone" /></div>
+          </div>
+          <div class="field">
+            <label>Initial functions granted</label>
+            <div id="initial-modules" class="module-checks"></div>
+          </div>
+          <button type="submit">Create Branch</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>All Branches</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Code</th><th>Type</th><th>Status</th><th></th></tr></thead>
+            <tbody id="branches-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="branch-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;" id="branch-modal-title">Manage Branch</h3>
+        <button type="button" class="secondary" id="branch-modal-close">Close</button>
+      </div>
+
+      <h4>Functions</h4>
+      <div id="modal-modules" class="module-checks"></div>
+      <button type="button" id="save-modules-btn" style="margin-top:8px;">Save Functions</button>
+
+      <h4 style="margin-top:18px;">Users with access</h4>
+      <ul id="modal-users" class="branch-user-list"></ul>
+      <div class="form-row" style="margin-top:8px;">
+        <div class="field" style="flex:1;">
+          <select id="grant-user-select"></select>
+        </div>
+        <button type="button" id="grant-user-btn" class="secondary">Grant Access</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/branches.js"></script>
+</body>
+</html>

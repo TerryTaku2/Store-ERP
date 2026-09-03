@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audit Log · Store Finance</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Audit Log</h1>
+      </header>
+
+      <div id="msg-box"></div>
+
+      <div class="panel">
+        <div class="form-row">
+          <div class="field">
+            <label>Entity type</label>
+            <select id="filter-entity">
+              <option value="">All</option>
+              <option value="product">Product</option>
+              <option value="supplier">Supplier</option>
+              <option value="expense">Expense</option>
+              <option value="purchase">Purchase</option>
+              <option value="sale">Sale</option>
+              <option value="user">User</option>
+              <option value="auth">Auth</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Action</label>
+            <select id="filter-action">
+              <option value="">All</option>
+              <option value="create">Create</option>
+              <option value="update">Update</option>
+              <option value="delete">Delete</option>
+              <option value="login">Login</option>
+              <option value="login_failed">Login Failed</option>
+            </select>
+          </div>
+          <div class="field"><label>Start date</label><input id="filter-start" type="date" /></div>
+          <div class="field"><label>End date</label><input id="filter-end" type="date" /></div>
+          <div class="field" style="display:flex;align-items:flex-end;"><button id="run-filter-btn">Filter</button></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+          <button type="button" class="secondary" id="export-audit-btn">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>User</th><th>Role</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead>
+            <tbody id="audit-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/audit.js"></script>
+</body>
+</html>

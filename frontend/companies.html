@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Companies · Store Finance</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Companies</h1>
+      </header>
+
+      <div id="msg-box"></div>
+
+      <div class="panel">
+        <h3>New Company</h3>
+        <form id="company-form">
+          <div class="form-row">
+            <div class="field"><label>Company name</label><input id="company-name" required /></div>
+            <div class="field"><label>Admin username</label><input id="admin-username" required /></div>
+            <div class="field"><label>Admin full name</label><input id="admin-full-name" required /></div>
+            <div class="field"><label>Admin password</label><input id="admin-password" type="password" required /></div>
+          </div>
+          <button type="submit">Create Company</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>All Companies</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Status</th><th>Created</th><th></th></tr></thead>
+            <tbody id="companies-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/companies.js"></script>
+</body>
+</html>

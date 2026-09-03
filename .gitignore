@@ -1,0 +1,8 @@
+backend/store.db
+backend/store.db.bak
+__pycache__/
+*.pyc
+.venv/
+venv/
+ngrok.exe
+*.log

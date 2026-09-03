@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports · Store Finance</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Reports</h1>
+        <button type="button" class="secondary no-print" id="print-report-btn">Print / Save as PDF</button>
+      </header>
+
+      <div id="msg-box"></div>
+
+      <div class="panel no-print">
+        <div class="form-row">
+          <div class="field"><label>Start date</label><input id="start-date" type="date" /></div>
+          <div class="field"><label>End date</label><input id="end-date" type="date" /></div>
+          <div class="field" style="display:flex;align-items:flex-end;"><button id="run-btn">Run Reports</button></div>
+        </div>
+      </div>
+
+      <div class="receipt-sub" id="print-range-label" style="display:none;"></div>
+
+      <div class="tabs no-print">
+        <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
+        <button type="button" class="tab-btn" data-tab="financial-statement">Financial Statement</button>
+        <button type="button" class="tab-btn" data-tab="performance">Store Performance</button>
+        <button type="button" class="tab-btn" data-tab="top-products">Top Products</button>
+      </div>
+
+      <!-- ===== Overview ===== -->
+      <div class="tab-panel" id="tab-overview">
+        <div class="kpi-grid">
+          <div class="kpi-card good"><div class="kpi-icon">💵</div><div class="label">Revenue</div><div class="value" id="kpi-revenue">-</div></div>
+          <div class="kpi-card"><div class="kpi-icon">📦</div><div class="label">COGS</div><div class="value" id="kpi-cogs">-</div></div>
+          <div class="kpi-card"><div class="kpi-icon">📈</div><div class="label">Gross Profit</div><div class="value" id="kpi-gross">-</div></div>
+          <div class="kpi-card bad"><div class="kpi-icon">📉</div><div class="label">Expenses</div><div class="value" id="kpi-expenses">-</div></div>
+          <div class="kpi-card" id="kpi-net-card"><div class="kpi-icon">💰</div><div class="label">Net Profit</div><div class="value" id="kpi-net">-</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Sales Trend</h3>
+          <canvas id="sales-chart" height="90"></canvas>
+        </div>
+
+        <div class="panel">
+          <h3>Cash Flow</h3>
+          <div class="kpi-grid">
+            <div class="kpi-card good"><div class="kpi-icon">⬇️</div><div class="label">Cash In (Sales)</div><div class="value" id="kpi-cash-in">-</div></div>
+            <div class="kpi-card bad"><div class="kpi-icon">⬆️</div><div class="label">Cash Out (Expenses + Purchases)</div><div class="value" id="kpi-cash-out">-</div></div>
+            <div class="kpi-card" id="kpi-net-cash-card"><div class="kpi-icon">🔁</div><div class="label">Net Cash Flow</div><div class="value" id="kpi-net-cash">-</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h3>Inventory Valuation <span id="inv-total" style="margin-left:12px;font-weight:normal;color:var(--text-muted);"></span></h3>
+            <button type="button" class="secondary no-print" id="export-inventory-value-btn">Export CSV</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>SKU</th><th>Product</th><th>Qty on Hand</th><th>Cost Price</th><th>Value</th></tr></thead>
+              <tbody id="inventory-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Financial Statement ===== -->
+      <div class="tab-panel hidden" id="tab-financial-statement">
+        <div class="panel">
+          <h3>Income Statement <span style="font-weight:normal;color:var(--text-muted);" id="fs-period-label"></span></h3>
+          <div class="table-wrap">
+            <table>
+              <tbody id="income-statement-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Balance Sheet <span style="font-weight:normal;color:var(--text-muted);" id="fs-as-of-label"></span></h3>
+          <p style="color:var(--text-muted);font-size:0.82rem;">
+            Approximate: this system does not track loans, payables, or capital contributions,
+            so liabilities are assumed to be zero and equity equals total assets.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <tbody id="balance-sheet-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Store Performance ===== -->
+      <div class="tab-panel hidden" id="tab-performance">
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-icon">💵</div><div class="label">Revenue</div><div class="value" id="perf-revenue">-</div></div>
+          <div class="kpi-card"><div class="kpi-icon">💰</div><div class="label">Net Profit</div><div class="value" id="perf-net-profit">-</div></div>
+          <div class="kpi-card"><div class="kpi-icon">🧾</div><div class="label">Transactions</div><div class="value" id="perf-transactions">-</div></div>
+          <div class="kpi-card"><div class="kpi-icon">📊</div><div class="label">Avg Sale Value</div><div class="value" id="perf-avg-sale">-</div></div>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.82rem;margin-top:-10px;" id="perf-compare-label"></p>
+
+        <div class="panel">
+          <h3>Sales by Cashier</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Cashier</th><th>Transactions</th><th>Revenue</th></tr></thead>
+              <tbody id="by-cashier-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Top Products ===== -->
+      <div class="tab-panel hidden" id="tab-top-products">
+        <div class="panel">
+          <h3>Most Demanded Products <span style="font-weight:normal;color:var(--text-muted);">(by quantity sold)</span></h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>SKU</th><th>Product</th><th>Qty Sold</th><th>Revenue</th><th>Profit</th></tr></thead>
+              <tbody id="most-demanded-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Most Profitable Products <span style="font-weight:normal;color:var(--text-muted);">(by gross profit)</span></h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>SKU</th><th>Product</th><th>Qty Sold</th><th>Revenue</th><th>Profit</th><th>Margin</th></tr></thead>
+              <tbody id="most-profitable-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/reports.js"></script>
+</body>
+</html>

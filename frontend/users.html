@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Users · Store Finance</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Users</h1>
+      </header>
+
+      <div id="msg-box"></div>
+
+      <div class="panel">
+        <h3 id="form-title">Add User</h3>
+        <form id="user-form">
+          <input type="hidden" id="user-id" />
+          <div class="form-row">
+            <div class="field"><label>Username</label><input id="username" required /></div>
+            <div class="field"><label>Full Name</label><input id="full_name" required /></div>
+            <div class="field">
+              <label>Role</label>
+              <select id="role">
+                <option value="cashier">Cashier</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="field"><label>Password <span id="password-hint" style="font-weight:normal;"></span></label><input id="password" type="password" /></div>
+          </div>
+          <button type="submit">Save User</button>
+          <button type="button" class="secondary hidden" id="cancel-edit-btn">Cancel</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>All Users</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>Status</th><th></th></tr></thead>
+            <tbody id="users-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/users.js"></script>
+</body>
+</html>
