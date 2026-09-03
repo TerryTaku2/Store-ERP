@@ -70,7 +70,16 @@ def ensure_demo_company(db: Session) -> tuple[models.Company, models.User]:
     cashier = _upsert_user(db, company, DEMO_CASHIER_USERNAME, "Demo Cashier", "cashier", DEMO_STAFF_PASSWORD)
     db.flush()
 
-    _reset_demo_data(db, company, admin, manager, cashier)
+    # The site's platform admin(s) present live demos too — move them into the
+    # demo company (not just grant a UserBranch row) since a user's accessible
+    # branches are always scoped to their own company_id. Done on every reset so
+    # it self-heals even if a demo visitor tampers with branches/users.
+    platform_admins = db.query(models.User).filter(models.User.is_platform_admin.is_(True)).all()
+    for pa in platform_admins:
+        pa.company_id = company.id
+    db.flush()
+
+    _reset_demo_data(db, company, admin, manager, cashier, extra_hq_users=platform_admins)
     db.commit()
     db.refresh(admin)
     return company, admin
@@ -91,7 +100,7 @@ def _upsert_user(db, company, username, full_name, role, password) -> models.Use
     return user
 
 
-def _reset_demo_data(db, company, admin, manager, cashier):
+def _reset_demo_data(db, company, admin, manager, cashier, extra_hq_users=()):
     old_branch_ids = [
         row[0] for row in db.query(models.Branch.id).filter(models.Branch.company_id == company.id).all()
     ]
@@ -136,6 +145,9 @@ def _reset_demo_data(db, company, admin, manager, cashier):
     db.add(models.UserBranch(user_id=manager.id, branch_id=riverside.id))
     db.add(models.UserBranch(user_id=cashier.id, branch_id=riverside.id))
     db.add(models.UserBranch(user_id=cashier.id, branch_id=airport.id))
+    for user in extra_hq_users:
+        if user.id != admin.id:
+            db.add(models.UserBranch(user_id=user.id, branch_id=hq.id))
     db.flush()
 
     _seed_branch(
