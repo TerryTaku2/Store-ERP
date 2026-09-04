@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
@@ -18,6 +18,8 @@ router = APIRouter(
 
 @router.get("", response_model=list[schemas.PurchaseOut])
 def list_purchases(
+    limit: int = Query(50, le=200),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(security.require_role("admin", "manager")),
     active_branch: models.Branch = Depends(security.get_active_branch),
@@ -26,7 +28,8 @@ def list_purchases(
         db.query(models.Purchase)
         .options(joinedload(models.Purchase.items).joinedload(models.PurchaseItem.product))
         .filter(models.Purchase.branch_id == active_branch.id)
-        .order_by(models.Purchase.created_at.desc())
+        .order_by(models.Purchase.created_at.desc(), models.Purchase.id.desc())
+        .offset(offset).limit(limit)
         .all()
     )
 

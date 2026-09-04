@@ -4,6 +4,9 @@
   renderSidebar("/expenses.html");
 
   let expenses = [];
+  let expensesOffset = 0;
+  let hasMoreExpenses = false;
+  const EXPENSES_PAGE_SIZE = 50;
   const msgBox = document.getElementById("msg-box");
   const form = document.getElementById("expense-form");
   const cancelBtn = document.getElementById("cancel-edit-btn");
@@ -36,10 +39,10 @@
 
   cancelBtn.addEventListener("click", resetForm);
 
-  async function loadExpenses() {
-    expenses = await api.get("/expenses");
+  function renderExpensesTable() {
     const body = document.getElementById("expenses-body");
     body.innerHTML = "";
+    document.getElementById("load-more-expenses-btn").classList.toggle("hidden", !hasMoreExpenses);
     if (expenses.length === 0) {
       body.innerHTML = '<tr><td colspan="5">No expenses recorded</td></tr>';
       return;
@@ -103,17 +106,54 @@
     }
   });
 
-  document.getElementById("export-expenses-btn").addEventListener("click", () => {
-    exportCSV(
-      "expenses.csv",
-      [
-        { key: "expense_date", label: "Date" },
-        { key: "category", label: "Category" },
-        { key: "description", label: "Description" },
-        { key: "amount", label: "Amount" },
-      ],
-      expenses
-    );
+  async function loadExpenses() {
+    const page = await api.get(`/expenses?limit=${EXPENSES_PAGE_SIZE}&offset=0`);
+    expenses = page;
+    expensesOffset = page.length;
+    hasMoreExpenses = page.length === EXPENSES_PAGE_SIZE;
+    renderExpensesTable();
+  }
+
+  async function loadMoreExpenses() {
+    const page = await api.get(`/expenses?limit=${EXPENSES_PAGE_SIZE}&offset=${expensesOffset}`);
+    expenses = expenses.concat(page);
+    expensesOffset += page.length;
+    hasMoreExpenses = page.length === EXPENSES_PAGE_SIZE;
+    renderExpensesTable();
+  }
+
+  document.getElementById("load-more-expenses-btn").addEventListener("click", () => {
+    loadMoreExpenses().catch((err) => showMsg(err.message, "error"));
+  });
+
+  async function fetchAllExpenses() {
+    let all = [];
+    let off = 0;
+    while (true) {
+      const page = await api.get(`/expenses?limit=200&offset=${off}`);
+      all = all.concat(page);
+      if (page.length < 200) break;
+      off += page.length;
+    }
+    return all;
+  }
+
+  document.getElementById("export-expenses-btn").addEventListener("click", async () => {
+    try {
+      const all = await fetchAllExpenses();
+      exportCSV(
+        "expenses.csv",
+        [
+          { key: "expense_date", label: "Date" },
+          { key: "category", label: "Category" },
+          { key: "description", label: "Description" },
+          { key: "amount", label: "Amount" },
+        ],
+        all
+      );
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
   });
 
   loadExpenses().catch((err) => showMsg(err.message, "error"));

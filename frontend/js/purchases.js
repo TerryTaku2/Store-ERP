@@ -111,11 +111,14 @@
   });
 
   let lastPurchases = [];
+  let purchasesOffset = 0;
+  let hasMorePurchases = false;
+  const PURCHASES_PAGE_SIZE = 50;
 
-  async function loadPurchases() {
-    lastPurchases = await api.get("/purchases");
+  function renderPurchasesTable() {
     const body = document.getElementById("purchases-body");
     body.innerHTML = "";
+    document.getElementById("load-more-purchases-btn").classList.toggle("hidden", !hasMorePurchases);
     if (lastPurchases.length === 0) {
       body.innerHTML = '<tr><td colspan="6">No purchases yet</td></tr>';
       return;
@@ -152,21 +155,58 @@
     );
   }
 
-  document.getElementById("export-purchases-btn").addEventListener("click", () => {
-    exportCSV(
-      "purchases.csv",
-      [
-        { key: "id", label: "Purchase #" },
-        { key: "invoice_no", label: "Invoice" },
-        { key: "items_summary", label: "Items" },
-        { key: "total_amount", label: "Total" },
-        { key: "created_at", label: "Date" },
-      ],
-      lastPurchases.map((p) => ({
-        ...p,
-        items_summary: p.items.map((i) => `${i.product?.name || "?"} x${i.quantity}`).join("; "),
-      }))
-    );
+  async function loadPurchases() {
+    const page = await api.get(`/purchases?limit=${PURCHASES_PAGE_SIZE}&offset=0`);
+    lastPurchases = page;
+    purchasesOffset = page.length;
+    hasMorePurchases = page.length === PURCHASES_PAGE_SIZE;
+    renderPurchasesTable();
+  }
+
+  async function loadMorePurchases() {
+    const page = await api.get(`/purchases?limit=${PURCHASES_PAGE_SIZE}&offset=${purchasesOffset}`);
+    lastPurchases = lastPurchases.concat(page);
+    purchasesOffset += page.length;
+    hasMorePurchases = page.length === PURCHASES_PAGE_SIZE;
+    renderPurchasesTable();
+  }
+
+  document.getElementById("load-more-purchases-btn").addEventListener("click", () => {
+    loadMorePurchases().catch((err) => showMsg(err.message, "error"));
+  });
+
+  async function fetchAllPurchases() {
+    let all = [];
+    let off = 0;
+    while (true) {
+      const page = await api.get(`/purchases?limit=200&offset=${off}`);
+      all = all.concat(page);
+      if (page.length < 200) break;
+      off += page.length;
+    }
+    return all;
+  }
+
+  document.getElementById("export-purchases-btn").addEventListener("click", async () => {
+    try {
+      const all = await fetchAllPurchases();
+      exportCSV(
+        "purchases.csv",
+        [
+          { key: "id", label: "Purchase #" },
+          { key: "invoice_no", label: "Invoice" },
+          { key: "items_summary", label: "Items" },
+          { key: "total_amount", label: "Total" },
+          { key: "created_at", label: "Date" },
+        ],
+        all.map((p) => ({
+          ...p,
+          items_summary: p.items.map((i) => `${i.product?.name || "?"} x${i.quantity}`).join("; "),
+        }))
+      );
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
   });
 
   (async () => {

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -15,6 +15,8 @@ router = APIRouter(
 
 @router.get("", response_model=list[schemas.ExpenseOut])
 def list_expenses(
+    limit: int = Query(50, le=200),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(security.require_role("admin", "manager")),
     active_branch: models.Branch = Depends(security.get_active_branch),
@@ -22,7 +24,8 @@ def list_expenses(
     return (
         db.query(models.Expense)
         .filter(models.Expense.branch_id == active_branch.id)
-        .order_by(models.Expense.expense_date.desc())
+        .order_by(models.Expense.expense_date.desc(), models.Expense.id.desc())
+        .offset(offset).limit(limit)
         .all()
     )
 

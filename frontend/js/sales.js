@@ -116,13 +116,16 @@
   });
 
   let lastSales = [];
+  let salesOffset = 0;
+  let hasMoreSales = false;
+  const SALES_PAGE_SIZE = 50;
 
   const canVoid = session.role === "admin" || session.role === "manager";
 
-  async function loadSales() {
-    lastSales = await api.get("/sales");
+  function renderSalesTable() {
     const body = document.getElementById("sales-body");
     body.innerHTML = "";
+    document.getElementById("load-more-sales-btn").classList.toggle("hidden", !hasMoreSales);
     if (lastSales.length === 0) {
       body.innerHTML = '<tr><td colspan="7">No sales yet</td></tr>';
       return;
@@ -160,18 +163,55 @@
     );
   }
 
-  document.getElementById("export-sales-btn").addEventListener("click", () => {
-    exportCSV(
-      "sales.csv",
-      [
-        { key: "id", label: "Invoice #" },
-        { key: "customer_name", label: "Customer" },
-        { key: "payment_method", label: "Payment Method" },
-        { key: "total_amount", label: "Total" },
-        { key: "created_at", label: "Date" },
-      ],
-      lastSales
-    );
+  async function loadSales() {
+    const page = await api.get(`/sales?limit=${SALES_PAGE_SIZE}&offset=0`);
+    lastSales = page;
+    salesOffset = page.length;
+    hasMoreSales = page.length === SALES_PAGE_SIZE;
+    renderSalesTable();
+  }
+
+  async function loadMoreSales() {
+    const page = await api.get(`/sales?limit=${SALES_PAGE_SIZE}&offset=${salesOffset}`);
+    lastSales = lastSales.concat(page);
+    salesOffset += page.length;
+    hasMoreSales = page.length === SALES_PAGE_SIZE;
+    renderSalesTable();
+  }
+
+  document.getElementById("load-more-sales-btn").addEventListener("click", () => {
+    loadMoreSales().catch((err) => showMsg(err.message, "error"));
+  });
+
+  async function fetchAllSales() {
+    let all = [];
+    let off = 0;
+    while (true) {
+      const page = await api.get(`/sales?limit=200&offset=${off}`);
+      all = all.concat(page);
+      if (page.length < 200) break;
+      off += page.length;
+    }
+    return all;
+  }
+
+  document.getElementById("export-sales-btn").addEventListener("click", async () => {
+    try {
+      const all = await fetchAllSales();
+      exportCSV(
+        "sales.csv",
+        [
+          { key: "id", label: "Invoice #" },
+          { key: "customer_name", label: "Customer" },
+          { key: "payment_method", label: "Payment Method" },
+          { key: "total_amount", label: "Total" },
+          { key: "created_at", label: "Date" },
+        ],
+        all
+      );
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
   });
 
   Promise.all([loadProducts(), loadSales()]).catch((err) => showMsg(err.message, "error"));
