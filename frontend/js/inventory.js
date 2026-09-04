@@ -83,19 +83,28 @@
     mvProductFilter.innerHTML = '<option value="">All products</option>' + options;
   }
 
-  async function loadProducts() {
-    products = await api.get("/products");
-    if (canEdit && document.getElementById("product-id").value === "") {
-      populateParentSelect(null);
-    }
-    populateProductFilters();
+  function matchesSearch(p, term) {
+    if (!term) return true;
+    return [p.name, p.sku, p.barcode, p.category].some(
+      (field) => field && field.toLowerCase().includes(term)
+    );
+  }
+
+  function renderProductsTable() {
+    const term = document.getElementById("product-search").value.trim().toLowerCase();
+    const filtered = products.filter((p) => matchesSearch(p, term));
+
     const body = document.getElementById("products-body");
     body.innerHTML = "";
     if (products.length === 0) {
       body.innerHTML = '<tr><td colspan="9">No products yet</td></tr>';
       return;
     }
-    products.forEach((p) => {
+    if (filtered.length === 0) {
+      body.innerHTML = '<tr><td colspan="9">No products match your search</td></tr>';
+      return;
+    }
+    filtered.forEach((p) => {
       const lowStock = p.quantity_on_hand <= p.reorder_level;
       const tr = document.createElement("tr");
       if (lowStock) tr.className = "low-stock";
@@ -135,6 +144,17 @@
       })
     );
   }
+
+  async function loadProducts() {
+    products = await api.get("/products");
+    if (canEdit && document.getElementById("product-id").value === "") {
+      populateParentSelect(null);
+    }
+    populateProductFilters();
+    renderProductsTable();
+  }
+
+  document.getElementById("product-search").addEventListener("input", renderProductsTable);
 
   if (canEdit) {
     cancelBtn.addEventListener("click", resetForm);
