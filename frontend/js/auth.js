@@ -284,6 +284,15 @@ function handleDemoLoginButton() {
   });
 }
 
+function handleForgotPasswordLink() {
+  const link = document.getElementById("forgot-password-link");
+  if (!link) return;
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("forgot-password-msg").classList.toggle("hidden");
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("login-form")) {
     if (getToken()) {
@@ -291,6 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       handleLoginForm();
       handleDemoLoginButton();
+      handleForgotPasswordLink();
     }
   }
 });
