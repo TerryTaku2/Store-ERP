@@ -117,26 +117,47 @@
 
   let lastSales = [];
 
+  const canVoid = session.role === "admin" || session.role === "manager";
+
   async function loadSales() {
     lastSales = await api.get("/sales");
     const body = document.getElementById("sales-body");
     body.innerHTML = "";
     if (lastSales.length === 0) {
-      body.innerHTML = '<tr><td colspan="6">No sales yet</td></tr>';
+      body.innerHTML = '<tr><td colspan="7">No sales yet</td></tr>';
       return;
     }
     lastSales.forEach((s) => {
       const tr = document.createElement("tr");
+      if (s.is_voided) tr.style.opacity = "0.55";
       tr.innerHTML = `
         <td>${escapeHtml(s.invoice_no) || "#" + s.id}</td>
         <td>${escapeHtml(s.customer_name) || "-"}</td>
         <td>${escapeHtml(s.payment_method)}</td>
         <td>${fmtMoney(s.total_amount)}</td>
         <td>${fmtDate(s.created_at)}</td>
-        <td><a href="/receipt.html?sale_id=${s.id}" target="_blank">Receipt</a></td>
+        <td>${s.is_voided ? '<span class="badge voided">Voided</span>' : '<span class="badge active">Completed</span>'}</td>
+        <td class="actions-cell">
+          <a href="/receipt.html?sale_id=${s.id}" target="_blank">Receipt</a>
+          ${canVoid && !s.is_voided ? `<button data-void="${s.id}" class="danger">Void</button>` : ""}
+        </td>
       `;
       body.appendChild(tr);
     });
+
+    body.querySelectorAll("[data-void]").forEach((btn) =>
+      btn.addEventListener("click", async () => {
+        const reason = prompt("Void this sale — reason (optional), Cancel to abort:");
+        if (reason === null) return;
+        try {
+          await api.post(`/sales/${btn.dataset.void}/void`, { reason: reason || null });
+          showMsg("Sale voided", "success");
+          await Promise.all([loadProducts(), loadSales()]);
+        } catch (err) {
+          showMsg(err.message, "error");
+        }
+      })
+    );
   }
 
   document.getElementById("export-sales-btn").addEventListener("click", () => {

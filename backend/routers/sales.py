@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
@@ -114,6 +116,49 @@ def create_sale(
     audit.log(
         db, "create", "sale", sale.id,
         summary=f"Recorded sale #{sale.id} — {len(payload.items)} item(s), total {total:.2f}",
+        user=current_user,
+    )
+    db.commit()
+    db.refresh(sale)
+    return sale
+
+
+@router.post("/{sale_id}/void", response_model=schemas.SaleOut)
+def void_sale(
+    sale_id: int,
+    payload: schemas.VoidRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(security.require_role("admin", "manager")),
+    active_branch: models.Branch = Depends(security.get_active_branch),
+):
+    sale = db.query(models.Sale).options(
+        joinedload(models.Sale.items)
+    ).filter(models.Sale.id == sale_id, models.Sale.branch_id == active_branch.id).first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    if sale.is_voided:
+        raise HTTPException(status_code=400, detail="Sale is already voided")
+
+    # Reverse the stock this sale took out — restores exactly what was sold.
+    for item in sale.items:
+        product = db.query(models.Product).filter(models.Product.id == item.product_id).first()
+        if product:
+            product.quantity_on_hand += item.quantity
+            inventory.record_movement(
+                db, product, "adjustment", item.quantity,
+                reference_type="sale_void", reference_id=sale.id,
+                note=f"Reversal of voided sale #{sale.id}", user=current_user,
+            )
+
+    sale.is_voided = True
+    sale.voided_at = datetime.utcnow()
+    sale.voided_by_id = current_user.id
+    sale.void_reason = payload.reason
+
+    audit.log(
+        db, "void", "sale", sale.id,
+        summary=f"Voided sale #{sale.id} (was {sale.total_amount:.2f})"
+        + (f" — reason: {payload.reason}" if payload.reason else ""),
         user=current_user,
     )
     db.commit()

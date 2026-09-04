@@ -178,7 +178,15 @@ class PurchaseOut(BaseModel):
     invoice_no: Optional[str]
     total_amount: float
     created_at: datetime
+    is_voided: bool = False
+    voided_at: Optional[datetime] = None
+    void_reason: Optional[str] = None
+    voided_by_name: Optional[str] = None
     items: List[PurchaseItemOut] = []
+
+
+class VoidRequest(BaseModel):
+    reason: Optional[str] = None
 
 
 # ---------- Sales ----------
@@ -217,6 +225,10 @@ class SaleOut(BaseModel):
     total_amount: float
     created_at: datetime
     cashier_name: Optional[str] = None
+    is_voided: bool = False
+    voided_at: Optional[datetime] = None
+    void_reason: Optional[str] = None
+    voided_by_name: Optional[str] = None
     items: List[SaleItemOut] = []
 
 

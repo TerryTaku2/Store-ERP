@@ -113,11 +113,20 @@ class Purchase(Base):
     total_amount = Column(Float, nullable=False, default=0)
     recorded_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    is_voided = Column(Boolean, nullable=False, default=False)
+    voided_at = Column(DateTime, nullable=True)
+    voided_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    void_reason = Column(String, nullable=True)
 
     items = relationship(
         "PurchaseItem", back_populates="purchase", cascade="all, delete-orphan"
     )
-    recorded_by = relationship("User")
+    recorded_by = relationship("User", foreign_keys=[recorded_by_id])
+    voided_by = relationship("User", foreign_keys=[voided_by_id])
+
+    @property
+    def voided_by_name(self):
+        return self.voided_by.full_name if self.voided_by else None
 
 
 class PurchaseItem(Base):
@@ -146,15 +155,24 @@ class Sale(Base):
     payment_method = Column(String, nullable=False, default="cash")
     total_amount = Column(Float, nullable=False, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+    is_voided = Column(Boolean, nullable=False, default=False)
+    voided_at = Column(DateTime, nullable=True)
+    voided_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    void_reason = Column(String, nullable=True)
 
     items = relationship(
         "SaleItem", back_populates="sale", cascade="all, delete-orphan"
     )
-    cashier = relationship("User")
+    cashier = relationship("User", foreign_keys=[cashier_id])
+    voided_by = relationship("User", foreign_keys=[voided_by_id])
 
     @property
     def cashier_name(self):
         return self.cashier.full_name if self.cashier else None
+
+    @property
+    def voided_by_name(self):
+        return self.voided_by.full_name if self.voided_by else None
 
 
 class SaleItem(Base):

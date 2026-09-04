@@ -32,9 +32,16 @@
         )
         .join("");
 
+      const voidedBanner = sale.is_voided
+        ? `<div style="text-align:center;font-weight:700;color:var(--danger);border:2px solid var(--danger);border-radius:6px;padding:6px;margin-bottom:10px;">
+            VOIDED${sale.voided_by_name ? ` — by ${escapeHtml(sale.voided_by_name)}` : ""}${sale.void_reason ? `: ${escapeHtml(sale.void_reason)}` : ""}
+          </div>`
+        : "";
+
       document.getElementById("receipt").innerHTML = `
         <h2>Store Finance</h2>
         <div class="receipt-sub">Sales Receipt</div>
+        ${voidedBanner}
         <div class="receipt-meta"><span>Invoice</span><span>${escapeHtml(sale.invoice_no) || "#" + sale.id}</span></div>
         <div class="receipt-meta"><span>Date</span><span>${fmtDate(sale.created_at)}</span></div>
         <div class="receipt-meta"><span>Cashier</span><span>${escapeHtml(sale.cashier_name) || "-"}</span></div>

@@ -30,16 +30,22 @@ def dashboard_summary(
 
     today_sales_q = db.query(func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
         models.Sale.company_id == current_user.company_id,
+        models.Sale.is_voided.is_(False),
         models.Sale.created_at >= today_start, models.Sale.created_at < today_end,
     )
     month_revenue_q = db.query(func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
         models.Sale.company_id == current_user.company_id,
+        models.Sale.is_voided.is_(False),
         models.Sale.created_at >= month_start_dt,
     )
     month_cogs_q = (
         db.query(func.coalesce(func.sum(models.SaleItem.quantity * models.SaleItem.cost_price_at_sale), 0.0))
         .join(models.Sale, models.SaleItem.sale_id == models.Sale.id)
-        .filter(models.Sale.company_id == current_user.company_id, models.Sale.created_at >= month_start_dt)
+        .filter(
+            models.Sale.company_id == current_user.company_id,
+            models.Sale.is_voided.is_(False),
+            models.Sale.created_at >= month_start_dt,
+        )
     )
     month_expenses_q = db.query(func.coalesce(func.sum(models.Expense.amount), 0.0)).filter(
         models.Expense.company_id == current_user.company_id,
@@ -50,7 +56,7 @@ def dashboard_summary(
         models.Product.quantity_on_hand <= models.Product.reorder_level,
     )
     recent_sales_q = db.query(models.Sale).options(joinedload(models.Sale.cashier)).filter(
-        models.Sale.company_id == current_user.company_id
+        models.Sale.company_id == current_user.company_id, models.Sale.is_voided.is_(False)
     )
 
     if branch_filter is not None:
@@ -108,6 +114,7 @@ def sales_trend(
         func.coalesce(func.sum(models.Sale.total_amount), 0.0),
     ).filter(
         models.Sale.company_id == current_user.company_id,
+        models.Sale.is_voided.is_(False),
         models.Sale.created_at >= start_dt,
     )
     if branch_filter is not None:
@@ -167,15 +174,20 @@ def branches_overview(
     rows = []
     for b in branches:
         today_sales = db.query(func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
-            models.Sale.branch_id == b.id, models.Sale.created_at >= today_start, models.Sale.created_at < today_end
+            models.Sale.branch_id == b.id, models.Sale.is_voided.is_(False),
+            models.Sale.created_at >= today_start, models.Sale.created_at < today_end,
         ).scalar()
         month_revenue = db.query(func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
-            models.Sale.branch_id == b.id, models.Sale.created_at >= month_start_dt
+            models.Sale.branch_id == b.id, models.Sale.is_voided.is_(False),
+            models.Sale.created_at >= month_start_dt,
         ).scalar()
         month_cogs = (
             db.query(func.coalesce(func.sum(models.SaleItem.quantity * models.SaleItem.cost_price_at_sale), 0.0))
             .join(models.Sale, models.SaleItem.sale_id == models.Sale.id)
-            .filter(models.Sale.branch_id == b.id, models.Sale.created_at >= month_start_dt)
+            .filter(
+                models.Sale.branch_id == b.id, models.Sale.is_voided.is_(False),
+                models.Sale.created_at >= month_start_dt,
+            )
             .scalar()
         )
         month_expenses = db.query(func.coalesce(func.sum(models.Expense.amount), 0.0)).filter(

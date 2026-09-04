@@ -71,6 +71,7 @@ def cash_flow(
 
     cash_in_q = db.query(func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
         models.Sale.company_id == current_user.company_id,
+        models.Sale.is_voided.is_(False),
         models.Sale.created_at >= start_dt, models.Sale.created_at < end_dt,
     )
     expenses_out_q = db.query(func.coalesce(func.sum(models.Expense.amount), 0.0)).filter(
@@ -79,6 +80,7 @@ def cash_flow(
     )
     purchases_out_q = db.query(func.coalesce(func.sum(models.Purchase.total_amount), 0.0)).filter(
         models.Purchase.company_id == current_user.company_id,
+        models.Purchase.is_voided.is_(False),
         models.Purchase.created_at >= start_dt, models.Purchase.created_at < end_dt,
     )
     if branch_filter is not None:
@@ -138,6 +140,7 @@ def _profit_loss(
 
     revenue_q = db.query(func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
         models.Sale.company_id == company_id,
+        models.Sale.is_voided.is_(False),
         models.Sale.created_at >= start_dt, models.Sale.created_at < end_dt,
     )
     cogs_q = (
@@ -145,6 +148,7 @@ def _profit_loss(
         .join(models.Sale, models.SaleItem.sale_id == models.Sale.id)
         .filter(
             models.Sale.company_id == company_id,
+            models.Sale.is_voided.is_(False),
             models.Sale.created_at >= start_dt, models.Sale.created_at < end_dt,
         )
     )
@@ -154,6 +158,7 @@ def _profit_loss(
     )
     count_q = db.query(func.count(models.Sale.id)).filter(
         models.Sale.company_id == company_id,
+        models.Sale.is_voided.is_(False),
         models.Sale.created_at >= start_dt, models.Sale.created_at < end_dt,
     )
     if branch_id is not None:
@@ -203,10 +208,12 @@ def financial_statement(
     _, as_of_dt = _range_bounds(end_date, end_date)
 
     lifetime_sales_q = db.query(func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
-        models.Sale.company_id == current_user.company_id, models.Sale.created_at < as_of_dt
+        models.Sale.company_id == current_user.company_id,
+        models.Sale.is_voided.is_(False), models.Sale.created_at < as_of_dt,
     )
     lifetime_purchases_q = db.query(func.coalesce(func.sum(models.Purchase.total_amount), 0.0)).filter(
-        models.Purchase.company_id == current_user.company_id, models.Purchase.created_at < as_of_dt
+        models.Purchase.company_id == current_user.company_id,
+        models.Purchase.is_voided.is_(False), models.Purchase.created_at < as_of_dt,
     )
     lifetime_expenses_q = db.query(func.coalesce(func.sum(models.Expense.amount), 0.0)).filter(
         models.Expense.company_id == current_user.company_id, models.Expense.expense_date <= end_date
@@ -272,6 +279,7 @@ def store_performance(
         .join(models.Sale, models.Sale.cashier_id == models.User.id)
         .filter(
             models.Sale.company_id == current_user.company_id,
+            models.Sale.is_voided.is_(False),
             models.Sale.created_at >= start_dt, models.Sale.created_at < end_dt,
         )
     )
@@ -337,6 +345,7 @@ def top_products(
         .join(models.Sale, models.SaleItem.sale_id == models.Sale.id)
         .filter(
             models.Sale.company_id == current_user.company_id,
+            models.Sale.is_voided.is_(False),
             models.Sale.created_at >= start_dt, models.Sale.created_at < end_dt,
         )
     )
@@ -381,6 +390,7 @@ def sales_summary(
     day_col = func.date(models.Sale.created_at)
     query = db.query(day_col.label("day"), func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
         models.Sale.company_id == current_user.company_id,
+        models.Sale.is_voided.is_(False),
         models.Sale.created_at >= start_dt, models.Sale.created_at < end_dt,
     )
     if branch_filter is not None:

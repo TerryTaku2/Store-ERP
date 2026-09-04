@@ -362,6 +362,8 @@ tr.low-stock td { color: var(--danger); font-weight: 600; }
 .badge.admin { background: #ede9fe; color: #6d28d9; }
 .badge.manager { background: #dbeafe; color: #1d4ed8; }
 .badge.cashier { background: #dcfce7; color: #15803d; }
+.badge.voided { background: #fee2e2; color: #b91c1c; }
+.badge.active { background: #f1f5f9; color: #64748b; }
 
 .msg { padding: 11px 15px; border-radius: var(--radius); margin-bottom: 14px; font-size: 0.88rem; font-weight: 500; }
 .msg.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }

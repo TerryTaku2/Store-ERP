@@ -117,20 +117,39 @@
     const body = document.getElementById("purchases-body");
     body.innerHTML = "";
     if (lastPurchases.length === 0) {
-      body.innerHTML = '<tr><td colspan="4">No purchases yet</td></tr>';
+      body.innerHTML = '<tr><td colspan="6">No purchases yet</td></tr>';
       return;
     }
     lastPurchases.forEach((p) => {
       const itemsSummary = p.items.map((i) => `${escapeHtml(i.product?.name) || "?"} x${i.quantity}`).join(", ");
       const tr = document.createElement("tr");
+      if (p.is_voided) tr.style.opacity = "0.55";
       tr.innerHTML = `
         <td>${escapeHtml(p.invoice_no) || "#" + p.id}</td>
         <td>${itemsSummary}</td>
         <td>${fmtMoney(p.total_amount)}</td>
         <td>${fmtDate(p.created_at)}</td>
+        <td>${p.is_voided ? '<span class="badge voided">Voided</span>' : '<span class="badge active">Completed</span>'}</td>
+        <td class="actions-cell">
+          ${!p.is_voided ? `<button data-void="${p.id}" class="danger">Void</button>` : ""}
+        </td>
       `;
       body.appendChild(tr);
     });
+
+    body.querySelectorAll("[data-void]").forEach((btn) =>
+      btn.addEventListener("click", async () => {
+        const reason = prompt("Void this purchase — reason (optional), Cancel to abort:");
+        if (reason === null) return;
+        try {
+          await api.post(`/purchases/${btn.dataset.void}/void`, { reason: reason || null });
+          showMsg("Purchase voided", "success");
+          await Promise.all([loadProducts(), loadPurchases()]);
+        } catch (err) {
+          showMsg(err.message, "error");
+        }
+      })
+    );
   }
 
   document.getElementById("export-purchases-btn").addEventListener("click", () => {
