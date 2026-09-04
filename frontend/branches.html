@@ -34,7 +34,10 @@
       </div>
 
       <div class="panel">
-        <h3>All Branches</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>All Branches</h3>
+          <button type="button" class="secondary" id="export-branches-btn">Export CSV</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Name</th><th>Code</th><th>Type</th><th>Status</th><th></th></tr></thead>
@@ -52,9 +55,28 @@
         <button type="button" class="secondary" id="branch-modal-close">Close</button>
       </div>
 
-      <h4>Functions</h4>
-      <div id="modal-modules" class="module-checks"></div>
-      <button type="button" id="save-modules-btn" style="margin-top:8px;">Save Functions</button>
+      <h4>Details</h4>
+      <div class="form-row">
+        <div class="field"><label>Name</label><input id="modal-branch-name" /></div>
+        <div class="field"><label>Code</label><input id="modal-branch-code" disabled /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Address</label><input id="modal-branch-address" /></div>
+        <div class="field"><label>Phone</label><input id="modal-branch-phone" /></div>
+      </div>
+      <label style="display:inline-flex;align-items:center;gap:6px;font-weight:normal;text-transform:none;">
+        <input type="checkbox" id="modal-branch-active" /> Active
+      </label>
+      <button type="button" id="save-details-btn" style="margin-top:8px;display:block;">Save Details</button>
+
+      <div id="modal-functions-section">
+        <h4 style="margin-top:18px;">Functions</h4>
+        <div id="modal-modules" class="module-checks"></div>
+        <button type="button" id="save-modules-btn" style="margin-top:8px;">Save Functions</button>
+      </div>
+      <p id="modal-admin-note" class="hidden" style="margin-top:18px;color:var(--text-muted);font-size:13px;">
+        The administration branch always has full access to every function and can't be disabled.
+      </p>
 
       <h4 style="margin-top:18px;">Users with access</h4>
       <ul id="modal-users" class="branch-user-list"></ul>

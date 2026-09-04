@@ -24,23 +24,6 @@ def list_products(
     )
 
 
-@router.get("/low-stock", response_model=list[schemas.ProductOut])
-def low_stock_products(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(security.get_current_user),
-    active_branch: models.Branch = Depends(security.get_active_branch),
-):
-    return (
-        db.query(models.Product)
-        .filter(
-            models.Product.branch_id == active_branch.id,
-            models.Product.quantity_on_hand <= models.Product.reorder_level,
-        )
-        .order_by(models.Product.name)
-        .all()
-    )
-
-
 @router.get("/barcode/{barcode}", response_model=schemas.ProductOut)
 def get_product_by_barcode(
     barcode: str,

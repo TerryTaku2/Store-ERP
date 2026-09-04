@@ -71,6 +71,8 @@ def update_branch(
     ).first()
     if not branch:
         raise HTTPException(status_code=404, detail="Branch not found")
+    if branch.is_admin and payload.is_active is False:
+        raise HTTPException(status_code=400, detail="The administration branch can't be disabled")
 
     changes = []
     for key, value in payload.model_dump(exclude_unset=True).items():

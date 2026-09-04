@@ -47,7 +47,7 @@
         <td>${b.is_admin ? '<span class="badge admin">Administration</span>' : "Branch"}</td>
         <td>${b.is_active ? "Active" : "Disabled"}</td>
         <td class="actions-cell">
-          ${b.is_admin ? "" : `<button data-manage="${b.id}" class="secondary">Manage</button>`}
+          <button data-manage="${b.id}" class="secondary">Manage</button>
         </td>
       `;
       body.appendChild(tr);
@@ -87,6 +87,15 @@
     activeBranchId = branchId;
     const branch = branches.find((b) => b.id === branchId);
     document.getElementById("branch-modal-title").textContent = `Manage: ${branch.name}`;
+    document.getElementById("modal-branch-name").value = branch.name;
+    document.getElementById("modal-branch-code").value = branch.code;
+    document.getElementById("modal-branch-address").value = branch.address || "";
+    document.getElementById("modal-branch-phone").value = branch.phone || "";
+    const activeCheckbox = document.getElementById("modal-branch-active");
+    activeCheckbox.checked = branch.is_admin ? true : branch.is_active;
+    activeCheckbox.disabled = branch.is_admin;
+    document.getElementById("modal-functions-section").classList.toggle("hidden", branch.is_admin);
+    document.getElementById("modal-admin-note").classList.toggle("hidden", !branch.is_admin);
 
     const [modules, branchUsers] = await Promise.all([
       api.get(`/branches/${branchId}/modules`),
@@ -135,6 +144,23 @@
     );
   }
 
+  document.getElementById("save-details-btn").addEventListener("click", async () => {
+    try {
+      await api.put(`/branches/${activeBranchId}`, {
+        name: document.getElementById("modal-branch-name").value,
+        address: document.getElementById("modal-branch-address").value || null,
+        phone: document.getElementById("modal-branch-phone").value || null,
+        is_active: document.getElementById("modal-branch-active").checked,
+      });
+      showMsg("Branch details updated", "success");
+      await loadBranches();
+      const branch = branches.find((b) => b.id === activeBranchId);
+      if (branch) document.getElementById("branch-modal-title").textContent = `Manage: ${branch.name}`;
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
+  });
+
   document.getElementById("save-modules-btn").addEventListener("click", async () => {
     const modules = {};
     document.querySelectorAll(".modal-module-check").forEach((c) => (modules[c.value] = c.checked));
@@ -155,6 +181,25 @@
     } catch (err) {
       showMsg(err.message, "error");
     }
+  });
+
+  document.getElementById("export-branches-btn").addEventListener("click", () => {
+    exportCSV(
+      "branches.csv",
+      [
+        { key: "name", label: "Name" },
+        { key: "code", label: "Code" },
+        { key: "type", label: "Type" },
+        { key: "address", label: "Address" },
+        { key: "phone", label: "Phone" },
+        { key: "status", label: "Status" },
+      ],
+      branches.map((b) => ({
+        ...b,
+        type: b.is_admin ? "Administration" : "Branch",
+        status: b.is_active ? "Active" : "Disabled",
+      }))
+    );
   });
 
   loadBranches().catch((err) => showMsg(err.message, "error"));

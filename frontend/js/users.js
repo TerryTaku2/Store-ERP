@@ -111,5 +111,18 @@
     }
   });
 
+  document.getElementById("export-users-btn").addEventListener("click", () => {
+    exportCSV(
+      "users.csv",
+      [
+        { key: "username", label: "Username" },
+        { key: "full_name", label: "Full Name" },
+        { key: "role", label: "Role" },
+        { key: "status", label: "Status" },
+      ],
+      users.map((u) => ({ ...u, status: u.is_active ? "Active" : "Disabled" }))
+    );
+  });
+
   loadUsers().catch((err) => showMsg(err.message, "error"));
 })();

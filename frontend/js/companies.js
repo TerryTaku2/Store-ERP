@@ -17,8 +17,10 @@
     setTimeout(() => (msgBox.innerHTML = ""), 4000);
   }
 
+  let companies = [];
+
   async function loadCompanies() {
-    const companies = await api.get("/companies");
+    companies = await api.get("/companies");
     const body = document.getElementById("companies-body");
     body.innerHTML = "";
     companies.forEach((c) => {
@@ -62,6 +64,18 @@
     } catch (err) {
       showMsg(err.message, "error");
     }
+  });
+
+  document.getElementById("export-companies-btn").addEventListener("click", () => {
+    exportCSV(
+      "companies.csv",
+      [
+        { key: "name", label: "Name" },
+        { key: "status", label: "Status" },
+        { key: "created_at", label: "Created" },
+      ],
+      companies.map((c) => ({ ...c, status: c.is_active ? "Active" : "Disabled" }))
+    );
   });
 
   loadCompanies().catch((err) => showMsg(err.message, "error"));

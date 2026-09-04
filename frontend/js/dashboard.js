@@ -97,10 +97,13 @@
     });
   }
 
+  let lastBranchesOverview = [];
+
   async function loadBranchesOverview() {
     if (!session.isAdminBranch) return;
     try {
       const rows = await api.get("/dashboard/branches-overview");
+      lastBranchesOverview = rows;
       const panel = document.getElementById("branches-overview-panel");
       const body = document.getElementById("branches-overview-body");
       body.innerHTML = "";
@@ -174,6 +177,22 @@
       );
     }
   }
+
+  document.getElementById("export-branches-overview-btn").addEventListener("click", () => {
+    exportCSV(
+      "branch-overview.csv",
+      [
+        { key: "branch_name", label: "Branch" },
+        { key: "today_sales", label: "Today's Sales" },
+        { key: "month_revenue", label: "Month Revenue" },
+        { key: "month_expenses", label: "Month Expenses" },
+        { key: "month_net_profit", label: "Net Profit" },
+        { key: "stock_value", label: "Stock Value" },
+        { key: "low_stock_count", label: "Low Stock Items" },
+      ],
+      lastBranchesOverview
+    );
+  });
 
   loadDashboard("");
   loadSalesTrend("");
