@@ -90,6 +90,10 @@ def update_user(
     if payload.password:
         user.hashed_password = security.hash_password(payload.password)
         changes.append("password: changed")
+    if user.locked_until or user.failed_login_attempts:
+        user.locked_until = None
+        user.failed_login_attempts = 0
+        changes.append("login lockout: cleared")
 
     if changes:
         audit.log(

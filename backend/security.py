@@ -16,6 +16,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-me-in-productio
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 12
 
+LOGIN_LOCKOUT_THRESHOLD = 5
+LOGIN_LOCKOUT_MINUTES = 15
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 

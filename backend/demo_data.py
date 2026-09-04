@@ -96,6 +96,8 @@ def _upsert_user(db, company, username, full_name, role, password) -> models.Use
     user.is_active = True
     user.is_platform_admin = False
     user.hashed_password = security.hash_password(password)
+    user.failed_login_attempts = 0
+    user.locked_until = None
     db.flush()
     return user
 

@@ -80,6 +80,8 @@ class User(Base):
     role = Column(String, nullable=False, default="cashier")  # admin, manager, cashier
     is_active = Column(Boolean, default=True)
     is_platform_admin = Column(Boolean, nullable=False, default=False)
+    failed_login_attempts = Column(Integer, nullable=True, default=0)
+    locked_until = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

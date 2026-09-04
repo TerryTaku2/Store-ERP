@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -38,20 +40,51 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
-    if not user or not security.verify_password(form_data.password, user.hashed_password):
+
+    if user and user.locked_until and user.locked_until > datetime.utcnow():
+        minutes_left = max(1, int((user.locked_until - datetime.utcnow()).total_seconds() // 60) + 1)
         audit.log(
-            db,
-            "login_failed",
-            "auth",
-            summary=f"Failed login attempt for username '{form_data.username}'",
-            username=form_data.username,
+            db, "login_failed", "auth", user.id,
+            summary=f"Login attempt for locked account '{user.username}'", user=user,
         )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Too many failed attempts. Account locked — try again in {minutes_left} minute(s).",
+        )
+
+    if not user or not security.verify_password(form_data.password, user.hashed_password):
+        if user:
+            user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+            locked = False
+            if user.failed_login_attempts >= security.LOGIN_LOCKOUT_THRESHOLD:
+                user.locked_until = datetime.utcnow() + timedelta(minutes=security.LOGIN_LOCKOUT_MINUTES)
+                user.failed_login_attempts = 0
+                locked = True
+            audit.log(
+                db, "login_failed", "auth", user.id,
+                summary=(
+                    f"Failed login attempt for username '{form_data.username}'"
+                    + (f" — account locked for {security.LOGIN_LOCKOUT_MINUTES} minutes" if locked else "")
+                ),
+                user=user,
+            )
+        else:
+            audit.log(
+                db, "login_failed", "auth",
+                summary=f"Failed login attempt for username '{form_data.username}'",
+                username=form_data.username,
+            )
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    user.failed_login_attempts = 0
+    user.locked_until = None
+
     if not user.is_active:
         audit.log(
             db,
