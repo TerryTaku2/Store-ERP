@@ -111,6 +111,7 @@ function renderSidebar(activeHref) {
         <span class="role-badge">${escapeHtml(session.role) || ""}</span>
         <div style="margin-top:6px;font-size:0.75rem;color:#94a3b8;">${escapeHtml(session.branchName) || ""}</div>
         ${branchSwitcher}
+        <button class="logout-btn" id="change-password-btn" style="margin-top:8px;">Change Password</button>
         <button class="logout-btn" onclick="logout()">Log out</button>
       </div>
     </div>
@@ -129,9 +130,78 @@ function renderSidebar(activeHref) {
     });
   }
 
+  document.getElementById("change-password-btn").addEventListener("click", openChangePasswordModal);
+
   setupMobileSidebarToggle();
 
   if (window.feather) feather.replace();
+}
+
+function _ensurePasswordModal() {
+  if (document.getElementById("password-modal")) return;
+  const overlay = document.createElement("div");
+  overlay.id = "password-modal";
+  overlay.className = "modal-overlay hidden";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;">Change Password</h3>
+        <button type="button" class="secondary" id="password-modal-close">Close</button>
+      </div>
+      <div id="password-modal-error" class="msg error hidden"></div>
+      <form id="password-modal-form">
+        <div class="field">
+          <label>Current Password</label>
+          <input type="password" id="pw-current" autocomplete="current-password" required />
+        </div>
+        <div class="field">
+          <label>New Password</label>
+          <input type="password" id="pw-new" autocomplete="new-password" minlength="6" required />
+        </div>
+        <div class="field">
+          <label>Confirm New Password</label>
+          <input type="password" id="pw-confirm" autocomplete="new-password" minlength="6" required />
+        </div>
+        <button type="submit">Save New Password</button>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  document.getElementById("password-modal-close").addEventListener("click", () => overlay.classList.add("hidden"));
+
+  document.getElementById("password-modal-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorBox = document.getElementById("password-modal-error");
+    errorBox.classList.add("hidden");
+
+    const current_password = document.getElementById("pw-current").value;
+    const new_password = document.getElementById("pw-new").value;
+    const confirm = document.getElementById("pw-confirm").value;
+
+    if (new_password !== confirm) {
+      errorBox.textContent = "New passwords do not match";
+      errorBox.classList.remove("hidden");
+      return;
+    }
+
+    try {
+      await api.put("/auth/me/password", { current_password, new_password });
+      overlay.classList.add("hidden");
+      document.getElementById("password-modal-form").reset();
+      alert("Password changed successfully");
+    } catch (err) {
+      errorBox.textContent = err.message || "Could not change password";
+      errorBox.classList.remove("hidden");
+    }
+  });
+}
+
+function openChangePasswordModal() {
+  _ensurePasswordModal();
+  document.getElementById("password-modal-error").classList.add("hidden");
+  document.getElementById("password-modal-form").reset();
+  document.getElementById("password-modal").classList.remove("hidden");
 }
 
 function setupMobileSidebarToggle() {

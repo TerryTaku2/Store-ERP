@@ -108,6 +108,11 @@ class UserOut(UserBase):
     created_at: datetime
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
 # ---------- Products ----------
 
 class ProductBase(BaseModel):

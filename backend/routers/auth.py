@@ -149,3 +149,24 @@ def demo_login(db: Session = Depends(get_db)):
 @router.get("/me", response_model=schemas.UserOut)
 def read_me(current_user: models.User = Depends(security.get_current_user)):
     return current_user
+
+
+@router.put("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_own_password(
+    payload: schemas.ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(security.get_current_user),
+):
+    if not security.verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+    if len(payload.new_password) < 6:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password must be at least 6 characters")
+
+    current_user.hashed_password = security.hash_password(payload.new_password)
+    audit.log(
+        db, "update", "user", current_user.id,
+        summary=f"User '{current_user.username}' changed their own password",
+        user=current_user,
+    )
+    db.commit()
+    return None
