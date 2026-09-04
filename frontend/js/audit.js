@@ -37,11 +37,11 @@
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${fmtDate(l.created_at)}</td>
-        <td>${l.username}</td>
-        <td>${l.role ? `<span class="badge ${l.role}">${l.role}</span>` : "-"}</td>
-        <td>${l.action}</td>
-        <td>${l.entity_type}${l.entity_id ? " #" + l.entity_id : ""}</td>
-        <td>${l.summary}</td>
+        <td>${escapeHtml(l.username)}</td>
+        <td>${l.role ? `<span class="badge ${l.role}">${escapeHtml(l.role)}</span>` : "-"}</td>
+        <td>${escapeHtml(l.action)}</td>
+        <td>${escapeHtml(l.entity_type)}${l.entity_id ? " #" + l.entity_id : ""}</td>
+        <td>${escapeHtml(l.summary)}</td>
       `;
       body.appendChild(tr);
     });

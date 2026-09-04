@@ -28,7 +28,7 @@
     field.className = "field";
     field.innerHTML =
       `<label>Branch</label><select id="branch-filter"><option value="">All Branches</option>` +
-      session.branches.map((b) => `<option value="${b.id}">${b.name}</option>`).join("") +
+      session.branches.map((b) => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join("") +
       `</select>`;
     document.getElementById("start-date").closest(".form-row").insertBefore(
       field,
@@ -107,7 +107,7 @@
     }
     perf.by_cashier.forEach((c) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${c.cashier}</td><td>${c.transaction_count}</td><td>${fmtMoney(c.revenue)}</td>`;
+      tr.innerHTML = `<td>${escapeHtml(c.cashier)}</td><td>${c.transaction_count}</td><td>${fmtMoney(c.revenue)}</td>`;
       body.appendChild(tr);
     });
   }
@@ -120,7 +120,7 @@
     }
     tp.most_demanded.forEach((p) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${p.sku}</td><td>${p.name}</td><td>${p.quantity_sold}</td><td>${fmtMoney(p.revenue)}</td><td>${fmtMoney(p.profit)}</td>`;
+      tr.innerHTML = `<td>${escapeHtml(p.sku)}</td><td>${escapeHtml(p.name)}</td><td>${p.quantity_sold}</td><td>${fmtMoney(p.revenue)}</td><td>${fmtMoney(p.profit)}</td>`;
       demandedBody.appendChild(tr);
     });
 
@@ -132,7 +132,7 @@
     tp.most_profitable.forEach((p) => {
       const tr = document.createElement("tr");
       const margin = p.margin_pct === null || p.margin_pct === undefined ? "-" : `${p.margin_pct.toFixed(1)}%`;
-      tr.innerHTML = `<td>${p.sku}</td><td>${p.name}</td><td>${p.quantity_sold}</td><td>${fmtMoney(p.revenue)}</td><td>${fmtMoney(p.profit)}</td><td>${margin}</td>`;
+      tr.innerHTML = `<td>${escapeHtml(p.sku)}</td><td>${escapeHtml(p.name)}</td><td>${p.quantity_sold}</td><td>${fmtMoney(p.revenue)}</td><td>${fmtMoney(p.profit)}</td><td>${margin}</td>`;
       profitableBody.appendChild(tr);
     });
   }
@@ -176,7 +176,7 @@
     }
     inv.items.forEach((i) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${i.sku}</td><td>${i.name}</td><td>${i.quantity_on_hand}</td><td>${fmtMoney(i.cost_price)}</td><td>${fmtMoney(i.value)}</td>`;
+      tr.innerHTML = `<td>${escapeHtml(i.sku)}</td><td>${escapeHtml(i.name)}</td><td>${i.quantity_on_hand}</td><td>${fmtMoney(i.cost_price)}</td><td>${fmtMoney(i.value)}</td>`;
       invBody.appendChild(tr);
     });
 

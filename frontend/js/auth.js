@@ -91,7 +91,7 @@ function renderSidebar(activeHref) {
     ? `<select class="branch-switcher" id="branch-switcher">` +
       branches
         .map(
-          (b) => `<option value="${b.id}" ${b.id === session.branchId ? "selected" : ""}>${b.name}</option>`
+          (b) => `<option value="${b.id}" ${b.id === session.branchId ? "selected" : ""}>${escapeHtml(b.name)}</option>`
         )
         .join("") +
       `</select>`
@@ -107,9 +107,9 @@ function renderSidebar(activeHref) {
       <div class="brand">Store Finance</div>
       <nav>${sections}</nav>
       <div class="user-box">
-        <div>${session.fullName || session.username || ""}</div>
-        <span class="role-badge">${session.role || ""}</span>
-        <div style="margin-top:6px;font-size:0.75rem;color:#94a3b8;">${session.branchName || ""}</div>
+        <div>${escapeHtml(session.fullName) || escapeHtml(session.username) || ""}</div>
+        <span class="role-badge">${escapeHtml(session.role) || ""}</span>
+        <div style="margin-top:6px;font-size:0.75rem;color:#94a3b8;">${escapeHtml(session.branchName) || ""}</div>
         ${branchSwitcher}
         <button class="logout-btn" onclick="logout()">Log out</button>
       </div>

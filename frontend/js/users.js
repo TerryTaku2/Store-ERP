@@ -48,9 +48,9 @@
     users.forEach((u) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${u.username}</td>
-        <td>${u.full_name}</td>
-        <td><span class="badge ${u.role}">${u.role}</span></td>
+        <td>${escapeHtml(u.username)}</td>
+        <td>${escapeHtml(u.full_name)}</td>
+        <td><span class="badge ${u.role}">${escapeHtml(u.role)}</span></td>
         <td>${u.is_active ? "Active" : "Disabled"}</td>
         <td class="actions-cell">
           <button data-edit="${u.id}" class="secondary">Edit</button>

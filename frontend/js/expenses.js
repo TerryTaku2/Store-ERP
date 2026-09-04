@@ -48,8 +48,8 @@
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${x.expense_date}</td>
-        <td>${x.category}</td>
-        <td>${x.description || "-"}</td>
+        <td>${escapeHtml(x.category)}</td>
+        <td>${escapeHtml(x.description) || "-"}</td>
         <td>${fmtMoney(x.amount)}</td>
         <td class="actions-cell">
           <button data-edit="${x.id}" class="secondary">Edit</button>

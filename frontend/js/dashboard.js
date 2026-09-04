@@ -10,7 +10,7 @@
     select.style.width = "auto";
     select.innerHTML =
       `<option value="">All Branches</option>` +
-      session.branches.map((b) => `<option value="${b.id}">${b.name}</option>`).join("");
+      session.branches.map((b) => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join("");
     header.appendChild(select);
     select.addEventListener("change", () => {
       loadDashboard(select.value);
@@ -115,11 +115,11 @@
         const profitColor = r.month_net_profit >= 0 ? "var(--success)" : "var(--danger)";
         const lowStockDetail = r.low_stock_items.length
           ? `<div class="stock-alert-list">${r.low_stock_items
-              .map((i) => `${i.name} (${i.quantity_on_hand}/${i.reorder_level})`)
+              .map((i) => `${escapeHtml(i.name)} (${i.quantity_on_hand}/${i.reorder_level})`)
               .join(", ")}${r.low_stock_count > r.low_stock_items.length ? ", …" : ""}</div>`
           : "";
         tr.innerHTML = `
-          <td>${r.needs_attention ? "⚠️ " : ""}${r.branch_name}${r.is_admin ? ' <span class="badge admin">HQ</span>' : ""}</td>
+          <td>${r.needs_attention ? "⚠️ " : ""}${escapeHtml(r.branch_name)}${r.is_admin ? ' <span class="badge admin">HQ</span>' : ""}</td>
           <td>${fmtMoney(r.today_sales)}</td>
           <td>${fmtMoney(r.month_revenue)}</td>
           <td>${fmtMoney(r.month_expenses)}</td>
@@ -160,8 +160,8 @@
       data.recent_sales.forEach((s) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${s.invoice_no || "#" + s.id}</td>
-          <td>${s.cashier || "-"}</td>
+          <td>${escapeHtml(s.invoice_no) || "#" + s.id}</td>
+          <td>${escapeHtml(s.cashier) || "-"}</td>
           <td>${fmtMoney(s.total_amount)}</td>
           <td>${fmtDate(s.created_at)}</td>
         `;

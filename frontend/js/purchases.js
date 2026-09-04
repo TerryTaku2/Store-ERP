@@ -18,7 +18,7 @@
   async function loadProducts() {
     products = await api.get("/products");
     productSelect.innerHTML = products
-      .map((p) => `<option value="${p.id}">${p.name} (${p.sku})</option>`)
+      .map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.sku)})</option>`)
       .join("");
     if (products.length > 0) costInput.value = products[0].cost_price;
   }
@@ -34,7 +34,7 @@
       const product = await api.get(`/products/barcode/${encodeURIComponent(code)}`);
       cart.push({ product_id: product.id, name: product.name, quantity: 1, unit_cost: product.cost_price });
       renderCart();
-      showMsg(`Added '${product.name}' to cart`, "success");
+      showMsg(`Added '${escapeHtml(product.name)}' to cart`, "success");
     } catch (err) {
       showMsg(err.message, "error");
     }
@@ -62,7 +62,7 @@
       total += subtotal;
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${line.name}</td>
+        <td>${escapeHtml(line.name)}</td>
         <td>${line.quantity}</td>
         <td>${fmtMoney(line.unit_cost)}</td>
         <td>${fmtMoney(subtotal)}</td>
@@ -121,10 +121,10 @@
       return;
     }
     lastPurchases.forEach((p) => {
-      const itemsSummary = p.items.map((i) => `${i.product?.name || "?"} x${i.quantity}`).join(", ");
+      const itemsSummary = p.items.map((i) => `${escapeHtml(i.product?.name) || "?"} x${i.quantity}`).join(", ");
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${p.invoice_no || "#" + p.id}</td>
+        <td>${escapeHtml(p.invoice_no) || "#" + p.id}</td>
         <td>${itemsSummary}</td>
         <td>${fmtMoney(p.total_amount)}</td>
         <td>${fmtDate(p.created_at)}</td>

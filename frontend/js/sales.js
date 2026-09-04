@@ -18,7 +18,7 @@
   async function loadProducts() {
     products = await api.get("/products");
     productSelect.innerHTML = products
-      .map((p) => `<option value="${p.id}">${p.name} (${p.sku}) — ${p.quantity_on_hand} in stock</option>`)
+      .map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.sku)}) — ${p.quantity_on_hand} in stock</option>`)
       .join("");
     if (products.length > 0) {
       priceInput.value = products[0].sell_price;
@@ -36,7 +36,7 @@
       const product = await api.get(`/products/barcode/${encodeURIComponent(code)}`);
       cart.push({ product_id: product.id, name: product.name, quantity: 1, unit_price: product.sell_price });
       renderCart();
-      showMsg(`Added '${product.name}' to cart`, "success");
+      showMsg(`Added '${escapeHtml(product.name)}' to cart`, "success");
     } catch (err) {
       showMsg(err.message, "error");
     }
@@ -64,7 +64,7 @@
       total += subtotal;
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${line.name}</td>
+        <td>${escapeHtml(line.name)}</td>
         <td>${line.quantity}</td>
         <td>${fmtMoney(line.unit_price)}</td>
         <td>${fmtMoney(subtotal)}</td>
@@ -128,9 +128,9 @@
     lastSales.forEach((s) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${s.invoice_no || "#" + s.id}</td>
-        <td>${s.customer_name || "-"}</td>
-        <td>${s.payment_method}</td>
+        <td>${escapeHtml(s.invoice_no) || "#" + s.id}</td>
+        <td>${escapeHtml(s.customer_name) || "-"}</td>
+        <td>${escapeHtml(s.payment_method)}</td>
         <td>${fmtMoney(s.total_amount)}</td>
         <td>${fmtDate(s.created_at)}</td>
         <td><a href="/receipt.html?sale_id=${s.id}" target="_blank">Receipt</a></td>

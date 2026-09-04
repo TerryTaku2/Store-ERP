@@ -110,6 +110,18 @@ function fmtDate(value) {
   return d.toLocaleString();
 }
 
+const _escapeHtmlEl = document.createElement("div");
+// Every table/list render across the app builds rows via innerHTML template
+// literals. Any user-entered text (product name, customer name, description,
+// username, ...) MUST go through this before being interpolated in — otherwise
+// a low-privileged user could store a <script>/onerror payload that runs in
+// another user's browser (stored XSS) and steal their session token.
+function escapeHtml(value) {
+  if (value === null || value === undefined) return "";
+  _escapeHtmlEl.textContent = String(value);
+  return _escapeHtmlEl.innerHTML;
+}
+
 function csvEscape(value) {
   const s = value === null || value === undefined ? "" : String(value);
   if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';

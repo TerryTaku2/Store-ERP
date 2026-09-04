@@ -42,8 +42,8 @@
     branches.forEach((b) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${b.name}</td>
-        <td>${b.code}</td>
+        <td>${escapeHtml(b.name)}</td>
+        <td>${escapeHtml(b.code)}</td>
         <td>${b.is_admin ? '<span class="badge admin">Administration</span>' : "Branch"}</td>
         <td>${b.is_active ? "Active" : "Disabled"}</td>
         <td class="actions-cell">
@@ -107,7 +107,7 @@
     const selectable = allUsers.filter((u) => !grantedIds.has(u.id));
     const select = document.getElementById("grant-user-select");
     select.innerHTML = selectable
-      .map((u) => `<option value="${u.id}">${u.full_name} (${u.username})</option>`)
+      .map((u) => `<option value="${u.id}">${escapeHtml(u.full_name)} (${escapeHtml(u.username)})</option>`)
       .join("") || `<option disabled>No other users</option>`;
 
     modal.classList.remove("hidden");
@@ -118,7 +118,7 @@
     list.innerHTML = branchUsers
       .map(
         (u) =>
-          `<li>${u.full_name} (${u.username}) <span class="badge ${u.role}">${u.role}</span>
+          `<li>${escapeHtml(u.full_name)} (${escapeHtml(u.username)}) <span class="badge ${u.role}">${escapeHtml(u.role)}</span>
             <button data-revoke="${u.id}" class="danger" style="margin-left:8px;padding:2px 8px;font-size:12px;">Revoke</button>
           </li>`
       )

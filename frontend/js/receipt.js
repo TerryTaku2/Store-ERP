@@ -24,7 +24,7 @@
         .map(
           (it) => `
         <tr>
-          <td>${it.product ? it.product.name : "Product #" + it.product_id}</td>
+          <td>${it.product ? escapeHtml(it.product.name) : "Product #" + it.product_id}</td>
           <td style="text-align:right;">${it.quantity}</td>
           <td style="text-align:right;">${fmtMoney(it.unit_price)}</td>
           <td style="text-align:right;">${fmtMoney(it.subtotal)}</td>
@@ -35,11 +35,11 @@
       document.getElementById("receipt").innerHTML = `
         <h2>Store Finance</h2>
         <div class="receipt-sub">Sales Receipt</div>
-        <div class="receipt-meta"><span>Invoice</span><span>${sale.invoice_no || "#" + sale.id}</span></div>
+        <div class="receipt-meta"><span>Invoice</span><span>${escapeHtml(sale.invoice_no) || "#" + sale.id}</span></div>
         <div class="receipt-meta"><span>Date</span><span>${fmtDate(sale.created_at)}</span></div>
-        <div class="receipt-meta"><span>Cashier</span><span>${sale.cashier_name || "-"}</span></div>
-        <div class="receipt-meta"><span>Customer</span><span>${sale.customer_name || "Walk-in"}</span></div>
-        <div class="receipt-meta"><span>Payment</span><span>${sale.payment_method}</span></div>
+        <div class="receipt-meta"><span>Cashier</span><span>${escapeHtml(sale.cashier_name) || "-"}</span></div>
+        <div class="receipt-meta"><span>Customer</span><span>${escapeHtml(sale.customer_name) || "Walk-in"}</span></div>
+        <div class="receipt-meta"><span>Payment</span><span>${escapeHtml(sale.payment_method)}</span></div>
         <hr />
         <table style="width:100%;">
           <thead><tr><th>Item</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Price</th><th style="text-align:right;">Total</th></tr></thead>

@@ -32,7 +32,7 @@
       '<option value="">— standalone product —</option>' +
       products
         .filter((p) => p.id !== excludeId)
-        .map((p) => `<option value="${p.id}">${p.name} (${p.sku})</option>`)
+        .map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.sku)})</option>`)
         .join("");
   }
 
@@ -69,15 +69,15 @@
   }
 
   function productLabel(p) {
-    if (!p.parent_product_id) return p.name;
+    if (!p.parent_product_id) return escapeHtml(p.name);
     const parent = products.find((x) => x.id === p.parent_product_id);
     const parentName = parent ? parent.name : `#${p.parent_product_id}`;
-    return `${p.name}<br><span style="color:var(--text-muted);font-size:0.78rem;">Variant of ${parentName}${p.variant_attributes ? " — " + p.variant_attributes : ""}</span>`;
+    return `${escapeHtml(p.name)}<br><span style="color:var(--text-muted);font-size:0.78rem;">Variant of ${escapeHtml(parentName)}${p.variant_attributes ? " — " + escapeHtml(p.variant_attributes) : ""}</span>`;
   }
 
   function populateProductFilters() {
     const options = products
-      .map((p) => `<option value="${p.id}">${p.name} (${p.sku})</option>`)
+      .map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.sku)})</option>`)
       .join("");
     if (canEdit) adjProductSelect.innerHTML = options;
     mvProductFilter.innerHTML = '<option value="">All products</option>' + options;
@@ -100,13 +100,13 @@
       const tr = document.createElement("tr");
       if (lowStock) tr.className = "low-stock";
       tr.innerHTML = `
-        <td>${p.sku}</td>
-        <td>${p.barcode || "-"}</td>
+        <td>${escapeHtml(p.sku)}</td>
+        <td>${escapeHtml(p.barcode) || "-"}</td>
         <td>${productLabel(p)}</td>
-        <td>${p.category || "-"}</td>
+        <td>${escapeHtml(p.category) || "-"}</td>
         <td>${fmtMoney(p.cost_price)}</td>
         <td>${fmtMoney(p.sell_price)}</td>
-        <td>${p.quantity_on_hand} ${p.unit || ""}${lowStock ? " ⚠" : ""}</td>
+        <td>${p.quantity_on_hand} ${escapeHtml(p.unit)}${lowStock ? " ⚠" : ""}</td>
         <td>${p.reorder_level}</td>
         <td class="actions-cell">
           ${canEdit ? `<button data-edit="${p.id}" class="secondary">Edit</button>
@@ -215,13 +215,13 @@
       const sign = m.quantity_delta > 0 ? "+" : "";
       tr.innerHTML = `
         <td>${fmtDate(m.created_at)}</td>
-        <td>${m.product ? `${m.product.name} (${m.product.sku})` : `#${m.product_id}`}</td>
-        <td>${m.movement_type}</td>
+        <td>${m.product ? `${escapeHtml(m.product.name)} (${escapeHtml(m.product.sku)})` : `#${m.product_id}`}</td>
+        <td>${escapeHtml(m.movement_type)}</td>
         <td>${sign}${m.quantity_delta}</td>
         <td>${m.balance_after}</td>
-        <td>${movementRefLabel(m)}</td>
-        <td>${m.note || "-"}</td>
-        <td>${m.created_by_name || "-"}</td>
+        <td>${escapeHtml(movementRefLabel(m))}</td>
+        <td>${escapeHtml(m.note) || "-"}</td>
+        <td>${escapeHtml(m.created_by_name) || "-"}</td>
       `;
       body.appendChild(tr);
     });

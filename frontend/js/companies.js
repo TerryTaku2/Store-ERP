@@ -24,7 +24,7 @@
     companies.forEach((c) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${c.name}</td>
+        <td>${escapeHtml(c.name)}</td>
         <td>${c.is_active ? "Active" : "Disabled"}</td>
         <td>${fmtDate(c.created_at)}</td>
         <td class="actions-cell">
