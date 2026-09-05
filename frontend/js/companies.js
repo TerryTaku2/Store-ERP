@@ -30,6 +30,7 @@
         <td>${c.is_active ? "Active" : "Disabled"}</td>
         <td>${fmtDate(c.created_at)}</td>
         <td class="actions-cell">
+          <button data-rename="${c.id}" class="secondary">Rename</button>
           <button data-toggle="${c.id}" data-active="${c.is_active}" class="secondary">
             ${c.is_active ? "Disable" : "Enable"}
           </button>
@@ -47,7 +48,35 @@
         loadCompanies();
       })
     );
+    body.querySelectorAll("[data-rename]").forEach((btn) =>
+      btn.addEventListener("click", () => openRenameModal(Number(btn.dataset.rename)))
+    );
   }
+
+  const companyModal = document.getElementById("company-modal");
+  let renamingCompanyId = null;
+
+  function openRenameModal(companyId) {
+    const company = companies.find((c) => c.id === companyId);
+    if (!company) return;
+    renamingCompanyId = companyId;
+    document.getElementById("modal-company-name").value = company.name;
+    companyModal.classList.remove("hidden");
+  }
+
+  document.getElementById("company-modal-close").addEventListener("click", () => companyModal.classList.add("hidden"));
+
+  document.getElementById("company-modal-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await api.put(`/companies/${renamingCompanyId}`, { name: document.getElementById("modal-company-name").value });
+      companyModal.classList.add("hidden");
+      showMsg("Business name updated", "success");
+      loadCompanies();
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
+  });
 
   document.getElementById("company-form").addEventListener("submit", async (e) => {
     e.preventDefault();

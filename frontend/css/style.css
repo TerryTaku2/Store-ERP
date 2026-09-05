@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────
-   Store Finance — Stylesheet
+   T-Tech Connect — Stylesheet
    Design system ported from the transport-financial-system (GRATZ)
    dark-sidebar / kpi-card visual language.
 ───────────────────────────────────────────────────────────── */
@@ -69,12 +69,19 @@ a:hover { color: var(--primary-dark); }
 
 .sidebar .brand {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   font-weight: 700;
   font-size: 1.05rem;
   color: #fff;
   padding: 20px 20px 18px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar .brand .brand-business {
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 4px;
 }
 
 .nav-section { padding: 14px 12px 2px; }

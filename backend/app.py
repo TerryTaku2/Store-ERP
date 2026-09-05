@@ -103,7 +103,7 @@ def seed_demo_company():
 seed_default_company()
 seed_demo_company()
 
-app = FastAPI(title="Store Financial Management System")
+app = FastAPI(title="T-Tech Connect")
 
 app.include_router(auth.router)
 app.include_router(users.router)

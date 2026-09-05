@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Companies · Store Finance</title>
+  <title>Companies · T-Tech Connect</title>
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
@@ -41,6 +41,19 @@
           </table>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="company-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;">Rename Business</h3>
+        <button type="button" class="secondary" id="company-modal-close">Close</button>
+      </div>
+      <form id="company-modal-form">
+        <div class="field"><label>Business name</label><input id="modal-company-name" required /></div>
+        <button type="submit">Save</button>
+      </form>
     </div>
   </div>
 

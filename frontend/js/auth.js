@@ -104,7 +104,7 @@ function renderSidebar(activeHref) {
   container.innerHTML = `
     <div class="sidebar" id="sidebar">
       ${demoBanner}
-      <div class="brand">Store Finance</div>
+      <div class="brand">T-Tech Connect${session.companyName ? `<span class="brand-business">${escapeHtml(session.companyName)}</span>` : ""}</div>
       <nav>${sections}</nav>
       <div class="user-box">
         <div>${escapeHtml(session.fullName) || escapeHtml(session.username) || ""}</div>

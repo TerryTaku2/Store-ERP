@@ -1,6 +1,7 @@
 (function () {
   const session = requireAuth();
   if (!session) return;
+  const receiptBrand = session.companyName || "T-Tech Connect";
 
   const msgBox = document.getElementById("msg-box");
   const params = new URLSearchParams(window.location.search);
@@ -39,7 +40,7 @@
         : "";
 
       document.getElementById("receipt").innerHTML = `
-        <h2>Store Finance</h2>
+        <h2>${escapeHtml(receiptBrand)}</h2>
         <div class="receipt-sub">Sales Receipt</div>
         ${voidedBanner}
         <div class="receipt-meta"><span>Invoice</span><span>${escapeHtml(sale.invoice_no) || "#" + sale.id}</span></div>

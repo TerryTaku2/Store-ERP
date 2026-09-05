@@ -1,8 +1,10 @@
-# Store Financial Management System
+# T-Tech Connect
 
 A store financial management system: sales & income tracking, expenses & purchases,
 inventory-linked costing, inventory levels, and a reports/dashboard. Multi-user with
-role-based access (admin / manager / cashier).
+role-based access (admin / manager / cashier). Multi-tenant — each registered
+business (company) can set its own business name, shown in the sidebar and on
+receipts alongside the T-Tech Connect product branding.
 
 ## Stack
 - Backend: FastAPI + SQLAlchemy + SQLite, JWT auth

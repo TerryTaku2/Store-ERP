@@ -14,6 +14,7 @@ function getSession() {
     role: localStorage.getItem("role"),
     fullName: localStorage.getItem("full_name"),
     username: localStorage.getItem("username"),
+    companyName: localStorage.getItem("company_name"),
     branchId: Number(localStorage.getItem("branch_id")) || null,
     branchName: localStorage.getItem("branch_name"),
     isAdminBranch: localStorage.getItem("is_admin_branch") === "true",
@@ -28,6 +29,7 @@ function storeSession(data) {
   localStorage.setItem("role", data.role);
   localStorage.setItem("full_name", data.full_name);
   localStorage.setItem("username", data.username);
+  localStorage.setItem("company_name", data.company_name || "");
   localStorage.setItem("branch_id", data.branch_id);
   localStorage.setItem("branch_name", data.branch_name || "");
   localStorage.setItem("is_admin_branch", data.is_admin_branch ? "true" : "false");
@@ -41,6 +43,7 @@ function clearSession() {
   localStorage.removeItem("role");
   localStorage.removeItem("full_name");
   localStorage.removeItem("username");
+  localStorage.removeItem("company_name");
   localStorage.removeItem("branch_id");
   localStorage.removeItem("branch_name");
   localStorage.removeItem("is_admin_branch");

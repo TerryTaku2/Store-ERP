@@ -15,7 +15,11 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 def _build_token(
-    user: models.User, branches: list[models.Branch], branch: models.Branch | None, is_demo: bool = False
+    user: models.User,
+    branches: list[models.Branch],
+    branch: models.Branch | None,
+    is_demo: bool = False,
+    company: models.Company | None = None,
 ) -> schemas.Token:
     payload = {"sub": user.username, "role": user.role}
     if branch is not None:
@@ -26,6 +30,7 @@ def _build_token(
         role=user.role,
         full_name=user.full_name,
         username=user.username,
+        company_name=company.name if company else None,
         branch_id=branch.id if branch else None,
         branch_name=branch.name if branch else None,
         is_admin_branch=branch.is_admin if branch else False,
@@ -98,6 +103,7 @@ def login(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
 
     is_demo = False
+    company = None
     if user.company_id is not None:
         company = db.query(models.Company).filter(models.Company.id == user.company_id).first()
         is_demo = bool(company and company.is_demo)
@@ -135,7 +141,7 @@ def login(
     )
     db.commit()
 
-    return _build_token(user, branches, active_branch, is_demo)
+    return _build_token(user, branches, active_branch, is_demo, company)
 
 
 @router.post("/switch-branch", response_model=schemas.Token)
@@ -157,7 +163,7 @@ def switch_branch(
     db.commit()
 
     company = db.query(models.Company).filter(models.Company.id == current_user.company_id).first()
-    return _build_token(current_user, branches, branch, bool(company and company.is_demo))
+    return _build_token(current_user, branches, branch, bool(company and company.is_demo), company)
 
 
 @router.post("/demo-login", response_model=schemas.Token)
@@ -176,7 +182,7 @@ def demo_login(db: Session = Depends(get_db)):
     )
     db.commit()
 
-    return _build_token(admin, branches, active_branch, is_demo=True)
+    return _build_token(admin, branches, active_branch, is_demo=True, company=company)
 
 
 @router.get("/me", response_model=schemas.UserOut)

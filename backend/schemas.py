@@ -14,6 +14,7 @@ class CompanyCreate(BaseModel):
 
 
 class CompanyUpdate(BaseModel):
+    name: Optional[str] = None
     is_active: Optional[bool] = None
 
 
@@ -76,6 +77,7 @@ class Token(BaseModel):
     role: str
     full_name: str
     username: str
+    company_name: Optional[str] = None
     branch_id: Optional[int] = None
     branch_name: Optional[str] = None
     is_admin_branch: bool = False
