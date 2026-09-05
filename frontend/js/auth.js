@@ -48,13 +48,85 @@ function isIos() {
 function isStandaloneDisplay() {
   return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 }
+
+const INSTALL_DISMISS_KEY = "install_banner_dismissed_at";
+const INSTALL_DISMISS_DAYS = 7;
+
+// The sidebar's own Install button is easy to miss on a phone — it's behind the
+// hamburger menu, several taps deep. This banner is the actual discoverable
+// entry point: it renders at the top of the page content itself.
+function ensureInstallBanner() {
+  let banner = document.getElementById("install-banner");
+  if (banner) return banner;
+  const container = document.querySelector(".main");
+  if (!container) return null;
+
+  banner = document.createElement("div");
+  banner.id = "install-banner";
+  banner.className = "install-banner hidden";
+  banner.innerHTML = `
+    <span id="install-banner-text"></span>
+    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+      <button type="button" id="install-banner-btn" class="hidden">Install</button>
+      <button type="button" class="icon-close" id="install-banner-dismiss" aria-label="Dismiss">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  `;
+  container.prepend(banner);
+
+  document.getElementById("install-banner-btn").addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    updateInstallUI();
+  });
+  document.getElementById("install-banner-dismiss").addEventListener("click", () => {
+    localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now()));
+    banner.classList.add("hidden");
+  });
+
+  return banner;
+}
+
 function updateInstallUI() {
   const installBtn = document.getElementById("install-app-btn");
   const iosHint = document.getElementById("install-ios-hint");
-  if (!installBtn || !iosHint) return;
-  installBtn.classList.toggle("hidden", !deferredInstallPrompt);
-  iosHint.classList.toggle("hidden", !(isIos() && !isStandaloneDisplay() && !deferredInstallPrompt));
+  if (installBtn && iosHint) {
+    installBtn.classList.toggle("hidden", !deferredInstallPrompt);
+    iosHint.classList.toggle("hidden", !(isIos() && !isStandaloneDisplay() && !deferredInstallPrompt));
+  }
+
+  const banner = ensureInstallBanner();
+  if (!banner) return;
+
+  if (isStandaloneDisplay()) {
+    banner.classList.add("hidden");
+    return;
+  }
+  const dismissedAt = Number(localStorage.getItem(INSTALL_DISMISS_KEY) || 0);
+  if (Date.now() - dismissedAt < INSTALL_DISMISS_DAYS * 24 * 60 * 60 * 1000) {
+    banner.classList.add("hidden");
+    return;
+  }
+
+  const bannerBtn = document.getElementById("install-banner-btn");
+  const bannerText = document.getElementById("install-banner-text");
+  if (deferredInstallPrompt) {
+    bannerText.textContent = "Install T-Tech Connect for quick access from your home screen.";
+    bannerBtn.classList.remove("hidden");
+    banner.classList.remove("hidden");
+  } else if (isIos()) {
+    bannerText.textContent = 'Install T-Tech Connect: tap Share, then "Add to Home Screen".';
+    bannerBtn.classList.add("hidden");
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
 }
+
+document.addEventListener("DOMContentLoaded", updateInstallUI);
 
 const THEME_OPTIONS = [
   { value: "dark-engineering", label: "Dark Engineering" },
