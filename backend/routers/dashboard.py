@@ -15,6 +15,8 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 @router.get("/summary")
 def dashboard_summary(
     branch_id: Optional[int] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(security.get_current_user),
     active_branch: models.Branch = Depends(security.get_active_branch),
@@ -27,6 +29,15 @@ def dashboard_summary(
 
     month_start = today.replace(day=1)
     month_start_dt = datetime.combine(month_start, datetime.min.time())
+
+    # The date-range summary (range_sales/range_expenses/range_net_profit below)
+    # defaults to the current calendar month, same as the month_* figures, but a
+    # caller can pass start_date/end_date to get the same three numbers for any
+    # custom range — that's what the dashboard's date-range picker calls.
+    range_start = start_date or month_start
+    range_end = end_date or today
+    range_start_dt = datetime.combine(range_start, datetime.min.time())
+    range_end_dt = datetime.combine(range_end, datetime.min.time()) + timedelta(days=1)
 
     today_sales_q = db.query(func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
         models.Sale.company_id == current_user.company_id,
@@ -65,6 +76,24 @@ def dashboard_summary(
         models.Sale.is_voided.is_(False),
         models.Sale.created_at >= today_start, models.Sale.created_at < today_end,
     )
+    range_sales_q = db.query(func.coalesce(func.sum(models.Sale.total_amount), 0.0)).filter(
+        models.Sale.company_id == current_user.company_id,
+        models.Sale.is_voided.is_(False),
+        models.Sale.created_at >= range_start_dt, models.Sale.created_at < range_end_dt,
+    )
+    range_cogs_q = (
+        db.query(func.coalesce(func.sum(models.SaleItem.quantity * models.SaleItem.cost_price_at_sale), 0.0))
+        .join(models.Sale, models.SaleItem.sale_id == models.Sale.id)
+        .filter(
+            models.Sale.company_id == current_user.company_id,
+            models.Sale.is_voided.is_(False),
+            models.Sale.created_at >= range_start_dt, models.Sale.created_at < range_end_dt,
+        )
+    )
+    range_expenses_q = db.query(func.coalesce(func.sum(models.Expense.amount), 0.0)).filter(
+        models.Expense.company_id == current_user.company_id,
+        models.Expense.expense_date >= range_start, models.Expense.expense_date <= range_end,
+    )
 
     if branch_filter is not None:
         today_sales_q = today_sales_q.filter(models.Sale.branch_id == branch_filter)
@@ -74,6 +103,9 @@ def dashboard_summary(
         low_stock_q = low_stock_q.filter(models.Product.branch_id == branch_filter)
         recent_sales_q = recent_sales_q.filter(models.Sale.branch_id == branch_filter)
         today_payment_breakdown_q = today_payment_breakdown_q.filter(models.Sale.branch_id == branch_filter)
+        range_sales_q = range_sales_q.filter(models.Sale.branch_id == branch_filter)
+        range_cogs_q = range_cogs_q.filter(models.Sale.branch_id == branch_filter)
+        range_expenses_q = range_expenses_q.filter(models.Expense.branch_id == branch_filter)
 
     today_sales = today_sales_q.scalar()
     month_revenue = month_revenue_q.scalar()
@@ -86,6 +118,10 @@ def dashboard_summary(
         method: total
         for method, total in today_payment_breakdown_q.group_by(models.Sale.payment_method).all()
     }
+    range_sales = range_sales_q.scalar()
+    range_cogs = range_cogs_q.scalar()
+    range_expenses = range_expenses_q.scalar()
+    range_net_profit = (range_sales - range_cogs) - range_expenses
 
     return {
         "today_sales": today_sales,
@@ -94,6 +130,11 @@ def dashboard_summary(
         "month_net_profit": month_net_profit,
         "low_stock_count": low_stock_count,
         "today_payment_breakdown": today_payment_breakdown,
+        "range_start": range_start,
+        "range_end": range_end,
+        "range_sales": range_sales,
+        "range_expenses": range_expenses,
+        "range_net_profit": range_net_profit,
         "recent_sales": [
             {
                 "id": s.id,

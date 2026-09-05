@@ -74,6 +74,24 @@
         </div>
       </div>
 
+      <div class="panel" id="financial-summary-panel">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+          <h3 style="border:none;padding:0;margin:0;">Financial Summary</h3>
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+            <div class="field" style="margin-bottom:0;"><label>Start</label><input type="date" id="range-start-date" /></div>
+            <div class="field" style="margin-bottom:0;"><label>End</label><input type="date" id="range-end-date" /></div>
+            <button type="button" class="secondary" id="range-this-month-btn">This Month</button>
+            <button type="button" id="range-apply-btn">Apply</button>
+          </div>
+        </div>
+        <div class="card-sub" id="range-period-label" style="margin:10px 0 14px;"></div>
+        <div class="kpi-grid" style="margin-bottom:0;">
+          <div class="kpi-card good"><div class="label">Sales</div><div class="value" id="range-sales-value">-</div></div>
+          <div class="kpi-card bad"><div class="label">Expenses</div><div class="value" id="range-expenses-value">-</div></div>
+          <div class="kpi-card" id="range-net-profit-card"><div class="label">Net Profit</div><div class="value" id="range-net-profit-value">-</div></div>
+        </div>
+      </div>
+
       <div class="charts-grid">
         <div class="panel">
           <h3>Sales Trend (last 14 days)</h3>

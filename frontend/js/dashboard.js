@@ -16,7 +16,9 @@
       session.branches.map((b) => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join("");
     header.appendChild(select);
     select.addEventListener("change", () => {
-      loadDashboard(select.value);
+      const start = document.getElementById("range-start-date").value;
+      const end = document.getElementById("range-end-date").value;
+      loadDashboard(select.value, start, end);
       loadSalesTrend(select.value);
       loadExpenseBreakdown(select.value);
     });
@@ -311,10 +313,14 @@
     }
   }
 
-  async function loadDashboard(branchId) {
+  async function loadDashboard(branchId, startDate, endDate) {
     try {
-      const query = branchId ? `?branch_id=${branchId}` : "";
-      const data = await api.get(`/dashboard/summary${query}`);
+      const params = new URLSearchParams();
+      if (branchId) params.set("branch_id", branchId);
+      if (startDate) params.set("start_date", startDate);
+      if (endDate) params.set("end_date", endDate);
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      const data = await api.get(`/dashboard/summary${qs}`);
 
       document.getElementById("kpi-today-sales").textContent = fmtMoney(data.today_sales);
       document.getElementById("kpi-month-revenue").textContent = fmtMoney(data.month_revenue);
@@ -326,6 +332,7 @@
 
       renderPaymentBreakdown(data.today_payment_breakdown || {});
       renderRecentActivityFallback(data.recent_sales);
+      renderRangeSummary(data);
 
       const body = document.getElementById("recent-sales-body");
       body.innerHTML = "";
@@ -349,6 +356,76 @@
       );
     }
   }
+
+  function fmtDateInput(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  // range_start/range_end come back as plain "YYYY-MM-DD" dates (no time), so
+  // format them as a date only — fmtDate() in api.js is for timestamps and would
+  // print a spurious midnight time component.
+  function fmtDateOnly(isoDate) {
+    if (!isoDate) return "";
+    const d = new Date(isoDate + "T00:00:00");
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  }
+
+  function currentBranchId() {
+    const select = document.getElementById("branch-filter");
+    return select ? select.value : "";
+  }
+
+  function renderRangeSummary(data) {
+    document.getElementById("range-start-date").value = data.range_start;
+    document.getElementById("range-end-date").value = data.range_end;
+    document.getElementById("range-period-label").textContent =
+      `${fmtDateOnly(data.range_start)} – ${fmtDateOnly(data.range_end)}`;
+    document.getElementById("range-sales-value").textContent = fmtMoney(data.range_sales);
+    document.getElementById("range-expenses-value").textContent = fmtMoney(data.range_expenses);
+
+    const netEl = document.getElementById("range-net-profit-value");
+    const netCard = document.getElementById("range-net-profit-card");
+    netEl.textContent = fmtMoney(data.range_net_profit);
+    netCard.classList.remove("good", "bad");
+    netCard.classList.add(data.range_net_profit >= 0 ? "good" : "bad");
+  }
+
+  async function loadFinancialSummary(branchId, startDate, endDate) {
+    try {
+      const params = new URLSearchParams();
+      if (branchId) params.set("branch_id", branchId);
+      if (startDate) params.set("start_date", startDate);
+      if (endDate) params.set("end_date", endDate);
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      const data = await api.get(`/dashboard/summary${qs}`);
+      renderRangeSummary(data);
+    } catch (err) {
+      showRangeError(err.message);
+    }
+  }
+
+  function showRangeError(message) {
+    const box = document.getElementById("financial-summary-panel");
+    box.insertAdjacentHTML("afterbegin", `<div class="msg error">${escapeHtml(message)}</div>`);
+    setTimeout(() => box.querySelector(".msg.error")?.remove(), 4000);
+  }
+
+  document.getElementById("range-this-month-btn").addEventListener("click", () => {
+    const now = new Date();
+    const monthStart = fmtDateInput(new Date(now.getFullYear(), now.getMonth(), 1));
+    const todayStr = fmtDateInput(now);
+    document.getElementById("range-start-date").value = monthStart;
+    document.getElementById("range-end-date").value = todayStr;
+    loadFinancialSummary(currentBranchId(), monthStart, todayStr);
+  });
+
+  document.getElementById("range-apply-btn").addEventListener("click", () => {
+    const start = document.getElementById("range-start-date").value;
+    const end = document.getElementById("range-end-date").value;
+    if (!start || !end) return showRangeError("Pick both a start and end date");
+    if (start > end) return showRangeError("Start date must be before end date");
+    loadFinancialSummary(currentBranchId(), start, end);
+  });
 
   document.getElementById("export-branches-overview-btn").addEventListener("click", () => {
     exportCSV(
