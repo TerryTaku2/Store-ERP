@@ -20,6 +20,11 @@ from database import Base
 # branch. Products/Inventory are always-on core functionality and not in this list.
 TOGGLE_MODULES = ["sales", "purchases", "expenses", "reports"]
 
+# UI theme a user can pick for themselves, saved to their account (see auth.py's
+# PUT /auth/me/theme). Kept as an allowlist so an arbitrary string can never end
+# up in the theme column.
+VALID_THEMES = ["dark-engineering", "warm-minimal", "high-contrast"]
+
 
 class Company(Base):
     __tablename__ = "companies"
@@ -82,6 +87,7 @@ class User(Base):
     is_platform_admin = Column(Boolean, nullable=False, default=False)
     failed_login_attempts = Column(Integer, nullable=True, default=0)
     locked_until = Column(DateTime, nullable=True)
+    theme = Column(String, nullable=True, default="dark-engineering")
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

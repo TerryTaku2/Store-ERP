@@ -31,6 +31,12 @@ const NAV_SECTIONS = [
   },
 ];
 
+const THEME_OPTIONS = [
+  { value: "dark-engineering", label: "Dark Engineering" },
+  { value: "warm-minimal", label: "Warm Minimal" },
+  { value: "high-contrast", label: "High Contrast" },
+];
+
 function requireAuth() {
   const session = getSession();
   if (!session.token) {
@@ -101,6 +107,10 @@ function renderSidebar(activeHref) {
     ? `<div class="demo-banner">Demo Mode — resets each session</div>`
     : "";
 
+  const themeSwitcher = `<select class="branch-switcher" id="theme-switcher" style="margin-top:8px;" aria-label="Theme">` +
+    THEME_OPTIONS.map((t) => `<option value="${t.value}" ${t.value === session.theme ? "selected" : ""}>${t.label}</option>`).join("") +
+    `</select>`;
+
   container.innerHTML = `
     <div class="sidebar" id="sidebar">
       ${demoBanner}
@@ -109,8 +119,9 @@ function renderSidebar(activeHref) {
       <div class="user-box">
         <div>${escapeHtml(session.fullName) || escapeHtml(session.username) || ""}</div>
         <span class="role-badge">${escapeHtml(session.role) || ""}</span>
-        <div style="margin-top:6px;font-size:0.75rem;color:#94a3b8;">${escapeHtml(session.branchName) || ""}</div>
+        <div style="margin-top:6px;font-size:0.75rem;color:var(--sidebar-text);">${escapeHtml(session.branchName) || ""}</div>
         ${branchSwitcher}
+        ${themeSwitcher}
         <button class="logout-btn" id="change-password-btn" style="margin-top:8px;">Change Password</button>
         <button class="logout-btn" onclick="logout()">Log out</button>
       </div>
@@ -129,6 +140,19 @@ function renderSidebar(activeHref) {
       }
     });
   }
+
+  document.getElementById("theme-switcher").addEventListener("change", async (e) => {
+    const theme = e.target.value;
+    const previous = session.theme;
+    applyTheme(theme);
+    try {
+      await api.put("/auth/me/theme", { theme });
+    } catch (err) {
+      applyTheme(previous);
+      e.target.value = previous;
+      alert(err.message || "Could not save theme preference");
+    }
+  });
 
   document.getElementById("change-password-btn").addEventListener("click", openChangePasswordModal);
 

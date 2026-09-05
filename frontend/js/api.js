@@ -15,6 +15,7 @@ function getSession() {
     fullName: localStorage.getItem("full_name"),
     username: localStorage.getItem("username"),
     companyName: localStorage.getItem("company_name"),
+    theme: localStorage.getItem("theme") || "dark-engineering",
     branchId: Number(localStorage.getItem("branch_id")) || null,
     branchName: localStorage.getItem("branch_name"),
     isAdminBranch: localStorage.getItem("is_admin_branch") === "true",
@@ -30,6 +31,7 @@ function storeSession(data) {
   localStorage.setItem("full_name", data.full_name);
   localStorage.setItem("username", data.username);
   localStorage.setItem("company_name", data.company_name || "");
+  localStorage.setItem("theme", data.theme || "dark-engineering");
   localStorage.setItem("branch_id", data.branch_id);
   localStorage.setItem("branch_name", data.branch_name || "");
   localStorage.setItem("is_admin_branch", data.is_admin_branch ? "true" : "false");
@@ -44,12 +46,23 @@ function clearSession() {
   localStorage.removeItem("full_name");
   localStorage.removeItem("username");
   localStorage.removeItem("company_name");
+  localStorage.removeItem("theme");
   localStorage.removeItem("branch_id");
   localStorage.removeItem("branch_name");
   localStorage.removeItem("is_admin_branch");
   localStorage.removeItem("is_platform_admin");
   localStorage.removeItem("is_demo");
   localStorage.removeItem("branches");
+}
+
+// Applies a UI theme immediately (for the theme switcher) and persists it so the
+// next page load's early anti-flash script (see each page's <head>) picks it up
+// before first paint.
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  try {
+    localStorage.setItem("theme", theme);
+  } catch (e) {}
 }
 
 async function apiRequest(path, { method = "GET", body = null, form = false } = {}) {

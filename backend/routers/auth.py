@@ -31,6 +31,7 @@ def _build_token(
         full_name=user.full_name,
         username=user.username,
         company_name=company.name if company else None,
+        theme=user.theme or "dark-engineering",
         branch_id=branch.id if branch else None,
         branch_name=branch.name if branch else None,
         is_admin_branch=branch.is_admin if branch else False,
@@ -207,5 +208,18 @@ def change_own_password(
         summary=f"User '{current_user.username}' changed their own password",
         user=current_user,
     )
+    db.commit()
+    return None
+
+
+@router.put("/me/theme", status_code=status.HTTP_204_NO_CONTENT)
+def update_own_theme(
+    payload: schemas.ThemeUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(security.get_current_user),
+):
+    if payload.theme not in models.VALID_THEMES:
+        raise HTTPException(status_code=400, detail="Invalid theme")
+    current_user.theme = payload.theme
     db.commit()
     return None

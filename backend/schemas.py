@@ -78,6 +78,7 @@ class Token(BaseModel):
     full_name: str
     username: str
     company_name: Optional[str] = None
+    theme: str = "dark-engineering"
     branch_id: Optional[int] = None
     branch_name: Optional[str] = None
     is_admin_branch: bool = False
@@ -113,6 +114,10 @@ class UserOut(UserBase):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
+
+class ThemeUpdate(BaseModel):
+    theme: str
 
 
 # ---------- Products ----------
