@@ -45,22 +45,65 @@
         </form>
       </div>
 
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-          <h3>Products</h3>
-          <input id="product-search" placeholder="Search by name, SKU, barcode or category…" style="flex:1;max-width:340px;min-width:200px;margin:0;" />
-          <button type="button" class="secondary" id="export-products-btn">Export CSV</button>
+      <div class="inventory-layout">
+        <div class="panel filter-panel">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input id="product-search" placeholder="Search by name, SKU, barcode…" />
+          </div>
+          <div class="filter-section-label">Categories</div>
+          <div id="category-filter-list"></div>
+          <div class="filter-section-label" style="margin-top:18px;">Stock Status</div>
+          <div id="status-filter-list"></div>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>SKU</th><th>Barcode</th><th>Name</th><th>Category</th><th>Cost</th><th>Sell</th>
-                <th>Qty on Hand</th><th>Reorder Lvl</th><th></th>
-              </tr>
-            </thead>
-            <tbody id="products-body"></tbody>
-          </table>
+
+        <div class="panel grid-panel">
+          <div class="grid-panel-header">
+            <h3 id="products-count-label">Products</h3>
+            <button type="button" class="secondary" id="export-products-btn">Export CSV</button>
+          </div>
+          <div class="grid-table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:30px;"><input type="checkbox" id="select-all-products" /></th>
+                  <th>SKU</th><th>Name</th><th>Category</th><th>Unit</th>
+                  <th>Cost Price</th><th>Sell Price</th><th>Qty on Hand</th><th>Reorder Level</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="products-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="floating-bar hidden" id="bulk-action-bar">
+        <div class="left">
+          <div class="selection-count" id="selection-count">0</div>
+          <div class="selection-text" id="selection-text">0 items selected</div>
+        </div>
+        <div class="actions">
+          <button class="secondary" id="bulk-edit-btn">Bulk Edit</button>
+          <button class="secondary" id="print-labels-btn">Print Labels</button>
+          <button class="secondary" id="bulk-export-btn">Export</button>
+          <button class="icon-close" id="clear-selection-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+        </div>
+      </div>
+
+      <div id="print-labels-sheet" class="print-labels-sheet"></div>
+
+      <div id="bulk-edit-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h3 style="margin:0;">Bulk Edit <span id="bulk-edit-count"></span></h3>
+            <button type="button" class="secondary" id="bulk-edit-close">Close</button>
+          </div>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-top:-6px;">Leave a field blank to leave it unchanged.</p>
+          <form id="bulk-edit-form">
+            <div class="field"><label>Category</label><input id="bulk-edit-category" placeholder="e.g. Beverages" /></div>
+            <div class="field"><label>Reorder Level</label><input id="bulk-edit-reorder" type="number" step="0.01" min="0" placeholder="e.g. 20" /></div>
+            <button type="submit">Apply</button>
+          </form>
         </div>
       </div>
 

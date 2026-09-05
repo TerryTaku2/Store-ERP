@@ -12,15 +12,58 @@
     <div id="sidebar-container"></div>
     <div class="main">
       <header>
-        <h1>Dashboard</h1>
+        <div>
+          <h1>Dashboard</h1>
+          <div class="subtitle" id="dashboard-subtitle"></div>
+        </div>
+        <span class="live-dot"><span class="dot"></span>Live</span>
       </header>
 
-      <div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-icon">💵</div><div class="label">Today's Sales</div><div class="value" id="kpi-today-sales">-</div></div>
-        <div class="kpi-card good"><div class="kpi-icon">📈</div><div class="label">Month Revenue</div><div class="value" id="kpi-month-revenue">-</div></div>
-        <div class="kpi-card bad"><div class="kpi-icon">📉</div><div class="label">Month Expenses</div><div class="value" id="kpi-month-expenses">-</div></div>
-        <div class="kpi-card" id="kpi-net-profit-card"><div class="kpi-icon">💰</div><div class="label">Month Net Profit</div><div class="value" id="kpi-net-profit">-</div></div>
-        <div class="kpi-card warn"><div class="kpi-icon">📦</div><div class="label">Low Stock Items</div><div class="value" id="kpi-low-stock">-</div></div>
+      <div class="command-grid">
+        <div class="panel cmd-hero">
+          <div class="cmd-hero-top">
+            <div>
+              <div class="card-label">Today's Sales</div>
+              <div class="card-value"><span id="kpi-today-sales">-</span><span class="change-pill" id="kpi-sales-change"></span></div>
+              <div class="card-sub" id="kpi-sales-sub"></div>
+            </div>
+            <svg id="sales-sparkline" viewBox="0 0 120 40" width="120" height="40"></svg>
+          </div>
+          <div class="drawer-row">
+            <span>Month revenue</span>
+            <span class="amt" id="kpi-month-revenue">-</span>
+          </div>
+          <div class="drawer-row" id="kpi-net-profit-card">
+            <span>Month net profit</span>
+            <span class="amt" id="kpi-net-profit">-</span>
+          </div>
+        </div>
+
+        <div class="panel cmd-stat">
+          <div class="card-label">Expenses to Date</div>
+          <div class="card-value" id="kpi-month-expenses">-</div>
+          <div class="card-sub">This month</div>
+        </div>
+
+        <div class="panel cmd-stat">
+          <div class="card-label">Today's Takings by Method</div>
+          <div id="payment-breakdown-rows"></div>
+        </div>
+
+        <div class="panel cmd-pending">
+          <h3 class="card-title">Recent Purchases</h3>
+          <div id="recent-purchases-rows"></div>
+        </div>
+
+        <div class="panel cmd-lowstock">
+          <h3 class="card-title">Low Stock Alerts</h3>
+          <div class="lowstock-list" id="lowstock-list"></div>
+        </div>
+
+        <div class="panel cmd-activity">
+          <h3 class="card-title">Recent Activity</h3>
+          <div class="activity-list" id="activity-list"></div>
+        </div>
       </div>
 
       <div class="charts-grid">

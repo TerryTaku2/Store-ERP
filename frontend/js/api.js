@@ -101,6 +101,28 @@ function fmtMoney(value) {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Shared healthy/warn/critical tiering used by the inventory heatmap and the
+// dashboard's low-stock list, so the same numbers always mean the same color.
+function stockSeverity(qty, reorderLevel) {
+  if (qty <= 0 || qty <= reorderLevel * 0.5) return "critical";
+  if (qty <= reorderLevel) return "warn";
+  return "healthy";
+}
+
+function timeAgo(value) {
+  if (!value) return "";
+  const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(value);
+  const d = new Date(hasTimezone ? value : value + "Z");
+  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
 function fmtDate(value) {
   if (!value) return "";
   // The API stores/returns timestamps in UTC but without a timezone marker

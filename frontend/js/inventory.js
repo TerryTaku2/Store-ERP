@@ -5,6 +5,9 @@
 
   const canEdit = session.role === "admin" || session.role === "manager";
   let products = [];
+  let activeCategory = "__all__";
+  let activeStatus = "__all__";
+  const selectedIds = new Set();
 
   const formPanel = document.getElementById("product-form-panel");
   const form = document.getElementById("product-form");
@@ -90,33 +93,214 @@
     );
   }
 
+  function categoryOf(p) {
+    return p.category && p.category.trim() ? p.category.trim() : "Uncategorized";
+  }
+
+  function matchesFilters(p) {
+    if (activeCategory !== "__all__" && categoryOf(p) !== activeCategory) return false;
+    if (activeStatus !== "__all__" && stockSeverity(p.quantity_on_hand, p.reorder_level) !== activeStatus) return false;
+    return true;
+  }
+
+  // ---------- Left filter panel: categories + stock status ----------
+
+  function renderFilterLists() {
+    const categoryCounts = new Map();
+    const statusCounts = { healthy: 0, warn: 0, critical: 0 };
+    products.forEach((p) => {
+      const cat = categoryOf(p);
+      categoryCounts.set(cat, (categoryCounts.get(cat) || 0) + 1);
+      statusCounts[stockSeverity(p.quantity_on_hand, p.reorder_level)]++;
+    });
+
+    const categoryList = document.getElementById("category-filter-list");
+    const categoryItems = [{ key: "__all__", label: "All Products", count: products.length }].concat(
+      Array.from(categoryCounts.keys())
+        .sort((a, b) => a.localeCompare(b))
+        .map((cat) => ({ key: cat, label: cat, count: categoryCounts.get(cat) }))
+    );
+    categoryList.innerHTML = categoryItems
+      .map(
+        (item) => `
+          <button type="button" class="filter-item ${activeCategory === item.key ? "active" : ""}" data-category="${escapeHtml(item.key)}">
+            ${escapeHtml(item.label)}<span class="count">${item.count}</span>
+          </button>`
+      )
+      .join("");
+    categoryList.querySelectorAll("[data-category]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        activeCategory = btn.dataset.category;
+        renderFilterLists();
+        renderProductsTable();
+      })
+    );
+
+    const statusList = document.getElementById("status-filter-list");
+    const statusItems = [
+      { key: "__all__", label: "All Products", count: products.length },
+      { key: "healthy", label: "Healthy", count: statusCounts.healthy },
+      { key: "warn", label: "Low Stock", count: statusCounts.warn },
+      { key: "critical", label: "Critical", count: statusCounts.critical },
+    ];
+    statusList.innerHTML = statusItems
+      .map(
+        (item) => `
+          <button type="button" class="filter-item ${activeStatus === item.key ? "active" : ""}" data-status="${item.key}">
+            ${escapeHtml(item.label)}<span class="count">${item.count}</span>
+          </button>`
+      )
+      .join("");
+    statusList.querySelectorAll("[data-status]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        activeStatus = btn.dataset.status;
+        renderFilterLists();
+        renderProductsTable();
+      })
+    );
+  }
+
+  // ---------- Inline cell editing (sell price / cost price / reorder level) ----------
+  // Quantity on hand is intentionally never inline-editable here — the app
+  // requires stock changes to go through Adjust Stock so every change leaves
+  // an audited inventory movement record (see fillForm, which disables it too).
+
+  function money(n) {
+    return Number(n).toFixed(2);
+  }
+
+  function renderEditableCell(product, field, formatter) {
+    if (!canEdit) return formatter(product[field]);
+    return `<button type="button" class="cell-edit-btn" data-field="${field}" data-id="${product.id}">${formatter(product[field])}</button>`;
+  }
+
+  async function saveInlineEdit(td, product, field, rawValue) {
+    const value = Number(rawValue);
+    if (isNaN(value) || value < 0) {
+      showMsg("Enter a valid non-negative number", "error");
+      renderProductsTable();
+      return;
+    }
+    if (value === product[field]) {
+      renderProductsTable();
+      return;
+    }
+    try {
+      const payload = {};
+      payload[field] = value;
+      const updated = await api.put(`/products/${product.id}`, payload);
+      const idx = products.findIndex((p) => p.id === product.id);
+      if (idx !== -1) products[idx] = updated;
+      showMsg("Product updated", "success");
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
+    renderFilterLists();
+    renderProductsTable();
+  }
+
+  function activateInlineEdit(btn) {
+    const id = Number(btn.dataset.id);
+    const field = btn.dataset.field;
+    const product = products.find((p) => p.id === id);
+    if (!product) return;
+    const td = btn.closest("td");
+    const input = document.createElement("input");
+    input.className = "cell-edit";
+    input.type = "number";
+    input.step = "0.01";
+    input.min = "0";
+    input.value = product[field];
+    td.innerHTML = "";
+    td.appendChild(input);
+    input.focus();
+    input.select();
+
+    let settled = false;
+    const commit = () => {
+      if (settled) return;
+      settled = true;
+      saveInlineEdit(td, product, field, input.value);
+    };
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commit();
+      } else if (e.key === "Escape") {
+        settled = true;
+        renderProductsTable();
+      }
+    });
+    input.addEventListener("blur", commit);
+  }
+
+  // ---------- Selection + floating bulk-action bar ----------
+
+  function renderBulkBar() {
+    const bar = document.getElementById("bulk-action-bar");
+    bar.classList.toggle("hidden", selectedIds.size === 0);
+    document.getElementById("selection-count").textContent = selectedIds.size;
+    document.getElementById("selection-text").textContent =
+      `${selectedIds.size} item${selectedIds.size === 1 ? "" : "s"} selected`;
+  }
+
+  function toggleSelection(id, checked) {
+    if (checked) selectedIds.add(id);
+    else selectedIds.delete(id);
+    const row = document.querySelector(`tr[data-row-id="${id}"]`);
+    if (row) row.classList.toggle("selected", checked);
+    renderBulkBar();
+  }
+
+  document.getElementById("clear-selection-btn").addEventListener("click", () => {
+    selectedIds.clear();
+    renderProductsTable();
+  });
+
+  document.getElementById("select-all-products").addEventListener("change", (e) => {
+    const term = document.getElementById("product-search").value.trim().toLowerCase();
+    const visible = products.filter((p) => matchesSearch(p, term) && matchesFilters(p));
+    visible.forEach((p) => (e.target.checked ? selectedIds.add(p.id) : selectedIds.delete(p.id)));
+    renderProductsTable();
+  });
+
+  // ---------- Main products grid ----------
+
   function renderProductsTable() {
     const term = document.getElementById("product-search").value.trim().toLowerCase();
-    const filtered = products.filter((p) => matchesSearch(p, term));
+    const filtered = products.filter((p) => matchesSearch(p, term) && matchesFilters(p));
+
+    document.getElementById("products-count-label").textContent = `${filtered.length} Product${filtered.length === 1 ? "" : "s"}`;
 
     const body = document.getElementById("products-body");
     body.innerHTML = "";
     if (products.length === 0) {
-      body.innerHTML = '<tr><td colspan="9">No products yet</td></tr>';
+      body.innerHTML = '<tr><td colspan="10">No products yet</td></tr>';
+      renderBulkBar();
       return;
     }
     if (filtered.length === 0) {
-      body.innerHTML = '<tr><td colspan="9">No products match your search</td></tr>';
+      body.innerHTML = '<tr><td colspan="10">No products match your filters</td></tr>';
+      renderBulkBar();
       return;
     }
+
     filtered.forEach((p) => {
-      const lowStock = p.quantity_on_hand <= p.reorder_level;
+      const severity = stockSeverity(p.quantity_on_hand, p.reorder_level);
+      const selected = selectedIds.has(p.id);
       const tr = document.createElement("tr");
-      if (lowStock) tr.className = "low-stock";
+      tr.dataset.rowId = p.id;
+      if (selected) tr.classList.add("selected");
       tr.innerHTML = `
-        <td>${escapeHtml(p.sku)}</td>
-        <td>${escapeHtml(p.barcode) || "-"}</td>
-        <td>${productLabel(p)}</td>
-        <td>${escapeHtml(p.category) || "-"}</td>
-        <td>${fmtMoney(p.cost_price)}</td>
-        <td>${fmtMoney(p.sell_price)}</td>
-        <td>${p.quantity_on_hand} ${escapeHtml(p.unit)}${lowStock ? " ⚠" : ""}</td>
-        <td>${p.reorder_level}</td>
+        <td><input type="checkbox" data-select="${p.id}" ${selected ? "checked" : ""} /></td>
+        <td class="prod-sku">${escapeHtml(p.sku)}</td>
+        <td class="prod-name">${productLabel(p)}</td>
+        <td><span class="cat-pill">${escapeHtml(categoryOf(p))}</span></td>
+        <td>${escapeHtml(p.unit) || "-"}</td>
+        <td>${renderEditableCell(p, "cost_price", money)}</td>
+        <td>${renderEditableCell(p, "sell_price", money)}</td>
+        <td><span class="qty-cell ${severity}">${p.quantity_on_hand}</span></td>
+        <td>${renderEditableCell(p, "reorder_level", (v) => String(v))}</td>
         <td class="actions-cell">
           ${canEdit ? `<button data-edit="${p.id}" class="secondary">Edit</button>
           <button data-delete="${p.id}" class="danger">Delete</button>` : ""}
@@ -125,6 +309,12 @@
       body.appendChild(tr);
     });
 
+    body.querySelectorAll("[data-select]").forEach((cb) =>
+      cb.addEventListener("change", () => toggleSelection(Number(cb.dataset.select), cb.checked))
+    );
+    body.querySelectorAll(".cell-edit-btn").forEach((btn) =>
+      btn.addEventListener("click", () => activateInlineEdit(btn))
+    );
     body.querySelectorAll("[data-edit]").forEach((btn) =>
       btn.addEventListener("click", () => {
         const p = products.find((x) => x.id === Number(btn.dataset.edit));
@@ -137,12 +327,17 @@
         try {
           await api.del(`/products/${btn.dataset.delete}`);
           showMsg("Product deleted", "success");
+          selectedIds.delete(Number(btn.dataset.delete));
           loadProducts();
         } catch (err) {
           showMsg(err.message, "error");
         }
       })
     );
+
+    document.getElementById("select-all-products").checked =
+      filtered.length > 0 && filtered.every((p) => selectedIds.has(p.id));
+    renderBulkBar();
   }
 
   async function loadProducts() {
@@ -151,6 +346,7 @@
       populateParentSelect(null);
     }
     populateProductFilters();
+    renderFilterLists();
     renderProductsTable();
   }
 
@@ -290,23 +486,86 @@
     });
   }
 
+  const PRODUCT_CSV_COLUMNS = [
+    { key: "sku", label: "SKU" },
+    { key: "barcode", label: "Barcode" },
+    { key: "name", label: "Name" },
+    { key: "category", label: "Category" },
+    { key: "unit", label: "Unit" },
+    { key: "cost_price", label: "Cost Price" },
+    { key: "sell_price", label: "Sell Price" },
+    { key: "quantity_on_hand", label: "Qty on Hand" },
+    { key: "reorder_level", label: "Reorder Level" },
+    { key: "variant_attributes", label: "Variant Attributes" },
+  ];
+
   document.getElementById("export-products-btn").addEventListener("click", () => {
-    exportCSV(
-      "products.csv",
-      [
-        { key: "sku", label: "SKU" },
-        { key: "barcode", label: "Barcode" },
-        { key: "name", label: "Name" },
-        { key: "category", label: "Category" },
-        { key: "unit", label: "Unit" },
-        { key: "cost_price", label: "Cost Price" },
-        { key: "sell_price", label: "Sell Price" },
-        { key: "quantity_on_hand", label: "Qty on Hand" },
-        { key: "reorder_level", label: "Reorder Level" },
-        { key: "variant_attributes", label: "Variant Attributes" },
-      ],
-      products
+    exportCSV("products.csv", PRODUCT_CSV_COLUMNS, products);
+  });
+
+  // ---------- Bulk actions (Export / Print Labels / Bulk Edit) ----------
+
+  document.getElementById("bulk-export-btn").addEventListener("click", () => {
+    exportCSV("products-selected.csv", PRODUCT_CSV_COLUMNS, products.filter((p) => selectedIds.has(p.id)));
+  });
+
+  document.getElementById("print-labels-btn").addEventListener("click", () => {
+    const selected = products.filter((p) => selectedIds.has(p.id));
+    if (selected.length === 0) return;
+    document.getElementById("print-labels-sheet").innerHTML = selected
+      .map(
+        (p) => `
+          <div class="label">
+            <div class="label-name">${escapeHtml(p.name)}</div>
+            <div class="label-sku">${escapeHtml(p.sku)}${p.barcode ? " · " + escapeHtml(p.barcode) : ""}</div>
+            <div class="label-price">${fmtMoney(p.sell_price)}</div>
+          </div>`
+      )
+      .join("");
+    document.body.classList.add("printing-labels");
+    window.print();
+  });
+
+  window.addEventListener("afterprint", () => {
+    document.body.classList.remove("printing-labels");
+  });
+
+  const bulkEditModal = document.getElementById("bulk-edit-modal");
+  document.getElementById("bulk-edit-btn").addEventListener("click", () => {
+    document.getElementById("bulk-edit-count").textContent = `(${selectedIds.size} product${selectedIds.size === 1 ? "" : "s"})`;
+    document.getElementById("bulk-edit-form").reset();
+    bulkEditModal.classList.remove("hidden");
+  });
+  document.getElementById("bulk-edit-close").addEventListener("click", () => bulkEditModal.classList.add("hidden"));
+
+  document.getElementById("bulk-edit-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const category = document.getElementById("bulk-edit-category").value.trim();
+    const reorderRaw = document.getElementById("bulk-edit-reorder").value;
+    const payload = {};
+    if (category) payload.category = category;
+    if (reorderRaw !== "") payload.reorder_level = Number(reorderRaw);
+
+    if (Object.keys(payload).length === 0) {
+      showMsg("Enter at least one field to apply", "error");
+      return;
+    }
+
+    const ids = Array.from(selectedIds);
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await api.put(`/products/${id}`, payload);
+      } catch (err) {
+        failed++;
+      }
+    }
+    bulkEditModal.classList.add("hidden");
+    showMsg(
+      failed === 0 ? `Updated ${ids.length} product${ids.length === 1 ? "" : "s"}` : `Updated ${ids.length - failed} product(s), ${failed} failed`,
+      failed === 0 ? "success" : "error"
     );
+    loadProducts();
   });
 
   loadProducts().catch((err) => showMsg(err.message, "error"));

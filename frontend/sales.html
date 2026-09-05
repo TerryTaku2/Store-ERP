@@ -10,58 +10,38 @@
   <div class="app-shell">
     <div id="sidebar-container"></div>
     <div class="main">
-      <header>
-        <h1>Sales</h1>
-      </header>
-
       <div id="msg-box"></div>
 
-      <div class="panel">
-        <h3>New Sale</h3>
-        <div class="form-row">
-          <div class="field"><label>Customer name (optional)</label><input id="customer_name" /></div>
-          <div class="field">
-            <label>Payment method</label>
-            <select id="payment_method">
-              <option value="cash">Cash</option>
-              <option value="card">Card</option>
-              <option value="mobile_money">Mobile Money</option>
-              <option value="credit">Credit</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="field">
-            <label>Scan barcode</label>
-            <div style="display:flex;gap:8px;">
-              <input id="barcode-input" placeholder="Scan or type barcode, then Enter" autocomplete="off" style="flex:1;" />
+      <div class="pos-layout">
+        <div class="pos-catalog">
+          <div class="pos-catalog-header">
+            <h1>Point of Sale</h1>
+            <div class="subtitle" id="pos-subtitle"></div>
+            <div style="display:flex;gap:10px;align-items:center;margin-top:16px;">
+              <div class="search-box" style="flex:1;margin-top:0;margin-bottom:0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input id="barcode-input" placeholder="Search by name, or scan/type barcode then Enter" autocomplete="off" />
+              </div>
               <button type="button" class="secondary" id="camera-scan-btn" style="white-space:nowrap;">Scan with Camera</button>
             </div>
+            <div class="pos-pills" id="category-pills"></div>
           </div>
+          <div class="tile-grid" id="tile-grid"></div>
         </div>
 
-        <div class="form-row">
-          <div class="field">
-            <label>Product</label>
-            <select id="line-product"></select>
+        <div class="pos-cart">
+          <div class="pos-cart-header"><h2>Current Sale</h2></div>
+          <div class="pos-cart-fields">
+            <div class="field"><label>Customer name (optional)</label><input id="customer_name" /></div>
           </div>
-          <div class="field"><label>Quantity</label><input id="line-qty" type="number" min="0.01" step="0.01" value="1" /></div>
-          <div class="field"><label>Unit Price</label><input id="line-price" type="number" min="0" step="0.01" /></div>
-          <div class="field" style="display:flex;align-items:flex-end;">
-            <button type="button" id="add-line-btn">Add Item</button>
+          <div class="pos-cart-items" id="cart-items"></div>
+          <div class="pos-cart-totals">
+            <div class="total-row grand"><span>Total</span><span id="cart-total">$0.00</span></div>
           </div>
+          <div class="tender-row" id="tender-row"></div>
+          <button type="button" class="checkout-btn" id="submit-sale-btn">Complete Sale</button>
+          <div id="last-sale-box" style="padding:0 20px 16px;"></div>
         </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th><th></th></tr></thead>
-            <tbody id="cart-body"></tbody>
-          </table>
-        </div>
-        <p style="text-align:right;font-size:1.1rem;"><strong>Total: <span id="cart-total">0.00</span></strong></p>
-        <button type="button" id="submit-sale-btn">Complete Sale</button>
-        <div id="last-sale-box"></div>
       </div>
 
       <div class="panel">

@@ -58,6 +58,13 @@ def dashboard_summary(
     recent_sales_q = db.query(models.Sale).options(joinedload(models.Sale.cashier)).filter(
         models.Sale.company_id == current_user.company_id, models.Sale.is_voided.is_(False)
     )
+    today_payment_breakdown_q = db.query(
+        models.Sale.payment_method, func.coalesce(func.sum(models.Sale.total_amount), 0.0)
+    ).filter(
+        models.Sale.company_id == current_user.company_id,
+        models.Sale.is_voided.is_(False),
+        models.Sale.created_at >= today_start, models.Sale.created_at < today_end,
+    )
 
     if branch_filter is not None:
         today_sales_q = today_sales_q.filter(models.Sale.branch_id == branch_filter)
@@ -66,6 +73,7 @@ def dashboard_summary(
         month_expenses_q = month_expenses_q.filter(models.Expense.branch_id == branch_filter)
         low_stock_q = low_stock_q.filter(models.Product.branch_id == branch_filter)
         recent_sales_q = recent_sales_q.filter(models.Sale.branch_id == branch_filter)
+        today_payment_breakdown_q = today_payment_breakdown_q.filter(models.Sale.branch_id == branch_filter)
 
     today_sales = today_sales_q.scalar()
     month_revenue = month_revenue_q.scalar()
@@ -74,6 +82,10 @@ def dashboard_summary(
     month_net_profit = (month_revenue - month_cogs) - month_expenses
     low_stock_count = low_stock_q.scalar()
     recent_sales = recent_sales_q.order_by(models.Sale.created_at.desc()).limit(5).all()
+    today_payment_breakdown = {
+        method: total
+        for method, total in today_payment_breakdown_q.group_by(models.Sale.payment_method).all()
+    }
 
     return {
         "today_sales": today_sales,
@@ -81,6 +93,7 @@ def dashboard_summary(
         "month_expenses": month_expenses,
         "month_net_profit": month_net_profit,
         "low_stock_count": low_stock_count,
+        "today_payment_breakdown": today_payment_breakdown,
         "recent_sales": [
             {
                 "id": s.id,

@@ -3,39 +3,124 @@
   if (!session) return;
   renderSidebar("/sales.html");
 
+  document.getElementById("pos-subtitle").textContent =
+    `${session.branchName || "Branch"} · ${session.fullName || session.username}`;
+
   let products = [];
-  let cart = [];
+  let cart = []; // { product_id, name, quantity, unit_price }
+  let activeCategory = "__all__";
+  let searchTerm = "";
+  let paymentMethod = "cash";
+
+  const SWATCH_COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#d946ef", "#6366f1", "#0ea5e9", "#f43f5e", "#10b981"];
+  const categoryColor = new Map();
+
+  const TENDER_OPTIONS = [
+    { value: "cash", label: "Cash" },
+    { value: "card", label: "Card" },
+    { value: "mobile_money", label: "Mobile Money" },
+    { value: "credit", label: "Credit" },
+  ];
 
   const msgBox = document.getElementById("msg-box");
-  const productSelect = document.getElementById("line-product");
-  const priceInput = document.getElementById("line-price");
-
   function showMsg(text, type) {
     msgBox.innerHTML = `<div class="msg ${type}">${text}</div>`;
     setTimeout(() => (msgBox.innerHTML = ""), 4000);
   }
 
-  async function loadProducts() {
-    products = await api.get("/products");
-    productSelect.innerHTML = products
-      .map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.sku)}) — ${p.quantity_on_hand} in stock</option>`)
-      .join("");
-    if (products.length > 0) {
-      priceInput.value = products[0].sell_price;
-    }
+  function categoryOf(p) {
+    return p.category && p.category.trim() ? p.category.trim() : "Uncategorized";
   }
 
-  productSelect.addEventListener("change", () => {
-    const p = products.find((x) => x.id === Number(productSelect.value));
-    if (p) priceInput.value = p.sell_price;
-  });
+  function swatchFor(category) {
+    if (!categoryColor.has(category)) {
+      categoryColor.set(category, SWATCH_COLORS[categoryColor.size % SWATCH_COLORS.length]);
+    }
+    return categoryColor.get(category);
+  }
+
+  function initialsOf(name) {
+    return name.trim().slice(0, 2).toUpperCase();
+  }
+
+  // ---------- Category pills ----------
+
+  function renderCategoryPills() {
+    const categories = Array.from(new Set(products.map(categoryOf))).sort((a, b) => a.localeCompare(b));
+    const items = [{ key: "__all__", label: "All" }].concat(categories.map((c) => ({ key: c, label: c })));
+    document.getElementById("category-pills").innerHTML = items
+      .map((item) => `<button type="button" class="pos-pill ${activeCategory === item.key ? "active" : ""}" data-cat="${escapeHtml(item.key)}">${escapeHtml(item.label)}</button>`)
+      .join("");
+    document.querySelectorAll("[data-cat]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        activeCategory = btn.dataset.cat;
+        renderCategoryPills();
+        renderTileGrid();
+      })
+    );
+  }
+
+  // ---------- Product tile grid ----------
+
+  function renderTileGrid() {
+    const term = searchTerm.trim().toLowerCase();
+    const filtered = products.filter((p) => {
+      if (activeCategory !== "__all__" && categoryOf(p) !== activeCategory) return false;
+      if (!term) return true;
+      return [p.name, p.sku, p.barcode].some((f) => f && f.toLowerCase().includes(term));
+    });
+
+    const grid = document.getElementById("tile-grid");
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="card-sub" style="padding:20px;">No products match</div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered
+      .map((p) => {
+        const line = cart.find((c) => c.product_id === p.id);
+        const outOfStock = p.quantity_on_hand <= 0;
+        return `
+          <button type="button" class="tile" data-add="${p.id}" ${outOfStock ? "disabled" : ""}>
+            ${line ? `<span class="tile-qty-badge">×${line.quantity}</span>` : ""}
+            <span class="swatch" style="background:${swatchFor(categoryOf(p))};">${escapeHtml(initialsOf(p.name))}</span>
+            <span class="tile-name">${escapeHtml(p.name)}</span>
+            <span class="tile-price">${outOfStock ? "Out of stock" : fmtMoney(p.sell_price)}</span>
+          </button>`;
+      })
+      .join("");
+
+    grid.querySelectorAll("[data-add]").forEach((btn) =>
+      btn.addEventListener("click", () => addToCart(Number(btn.dataset.add)))
+    );
+  }
+
+  async function loadProducts() {
+    products = await api.get("/products");
+    renderCategoryPills();
+    renderTileGrid();
+  }
+
+  // ---------- Cart ----------
+
+  function addToCart(productId, qtyDelta = 1) {
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
+    const existing = cart.find((c) => c.product_id === productId);
+    if (existing) {
+      existing.quantity += qtyDelta;
+    } else {
+      cart.push({ product_id: productId, name: product.name, quantity: qtyDelta, unit_price: product.sell_price });
+    }
+    renderCart();
+    renderTileGrid();
+  }
 
   async function addByBarcode(code) {
     if (!code) return;
     try {
       const product = await api.get(`/products/barcode/${encodeURIComponent(code)}`);
-      cart.push({ product_id: product.id, name: product.name, quantity: 1, unit_price: product.sell_price });
-      renderCart();
+      addToCart(product.id);
       showMsg(`Added '${escapeHtml(product.name)}' to cart`, "success");
     } catch (err) {
       showMsg(err.message, "error");
@@ -43,11 +128,16 @@
   }
 
   const barcodeInput = document.getElementById("barcode-input");
+  barcodeInput.addEventListener("input", () => {
+    searchTerm = barcodeInput.value;
+    renderTileGrid();
+  });
   barcodeInput.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
     const code = barcodeInput.value.trim();
     barcodeInput.value = "";
+    searchTerm = "";
     addByBarcode(code);
   });
 
@@ -55,52 +145,112 @@
     openCameraScanner((code) => addByBarcode(code));
   });
 
-  function renderCart() {
-    const body = document.getElementById("cart-body");
-    body.innerHTML = "";
-    let total = 0;
-    cart.forEach((line, idx) => {
-      const subtotal = line.quantity * line.unit_price;
-      total += subtotal;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${escapeHtml(line.name)}</td>
-        <td>${line.quantity}</td>
-        <td>${fmtMoney(line.unit_price)}</td>
-        <td>${fmtMoney(subtotal)}</td>
-        <td><button data-remove="${idx}" class="danger">Remove</button></td>
-      `;
-      body.appendChild(tr);
+  function changeQty(idx, delta) {
+    cart[idx].quantity += delta;
+    if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+    renderCart();
+    renderTileGrid();
+  }
+
+  function removeLine(idx) {
+    cart.splice(idx, 1);
+    renderCart();
+    renderTileGrid();
+  }
+
+  function activatePriceEdit(btn) {
+    const idx = Number(btn.dataset.priceIdx);
+    const line = cart[idx];
+    const wrap = btn.parentElement;
+    const input = document.createElement("input");
+    input.className = "cell-edit";
+    input.type = "number";
+    input.step = "0.01";
+    input.min = "0";
+    input.value = line.unit_price;
+    input.style.width = "64px";
+    wrap.innerHTML = "";
+    wrap.appendChild(input);
+    input.focus();
+    input.select();
+
+    let settled = false;
+    const commit = () => {
+      if (settled) return;
+      settled = true;
+      const value = Number(input.value);
+      if (!isNaN(value) && value >= 0) line.unit_price = value;
+      renderCart();
+    };
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); commit(); }
+      else if (e.key === "Escape") { settled = true; renderCart(); }
     });
+    input.addEventListener("blur", commit);
+  }
+
+  function renderCart() {
+    const container = document.getElementById("cart-items");
+    if (cart.length === 0) {
+      container.innerHTML = `<div class="card-sub" style="padding:16px 0;">Tap a product to add it to the sale</div>`;
+    } else {
+      container.innerHTML = cart
+        .map((line, idx) => {
+          const product = products.find((p) => p.id === line.product_id);
+          const cat = product ? categoryOf(product) : "";
+          const subtotal = line.quantity * line.unit_price;
+          return `
+            <div class="cart-line">
+              <span class="swatch" style="background:${swatchFor(cat)};width:34px;height:34px;font-size:11px;">${escapeHtml(initialsOf(line.name))}</span>
+              <div class="cart-line-info">
+                <div class="cart-line-name">${escapeHtml(line.name)}</div>
+                <div class="cart-line-price"><button type="button" class="cell-edit-btn" data-price-idx="${idx}" style="padding:0;border:none;color:var(--text-muted);font-size:11.5px;">${fmtMoney(line.unit_price)} each</button></div>
+              </div>
+              <div class="stepper">
+                <button type="button" data-qty-down="${idx}">−</button>
+                <span>${line.quantity}</span>
+                <button type="button" data-qty-up="${idx}">+</button>
+              </div>
+              <div class="cart-line-sub">${fmtMoney(subtotal)}</div>
+              <button type="button" class="cart-line-remove" data-remove="${idx}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>`;
+        })
+        .join("");
+    }
+
+    const total = cart.reduce((sum, l) => sum + l.quantity * l.unit_price, 0);
     document.getElementById("cart-total").textContent = fmtMoney(total);
 
-    body.querySelectorAll("[data-remove]").forEach((btn) =>
+    container.querySelectorAll("[data-qty-down]").forEach((btn) => btn.addEventListener("click", () => changeQty(Number(btn.dataset.qtyDown), -1)));
+    container.querySelectorAll("[data-qty-up]").forEach((btn) => btn.addEventListener("click", () => changeQty(Number(btn.dataset.qtyUp), 1)));
+    container.querySelectorAll("[data-remove]").forEach((btn) => btn.addEventListener("click", () => removeLine(Number(btn.dataset.remove))));
+    container.querySelectorAll(".cell-edit-btn").forEach((btn) => btn.addEventListener("click", () => activatePriceEdit(btn)));
+  }
+
+  // ---------- Tender selection ----------
+
+  function renderTenderRow() {
+    document.getElementById("tender-row").innerHTML = TENDER_OPTIONS
+      .map(
+        (opt) => `
+        <button type="button" class="tender-btn ${paymentMethod === opt.value ? "selected" : ""}" data-tender="${opt.value}">${escapeHtml(opt.label)}</button>`
+      )
+      .join("");
+    document.querySelectorAll("[data-tender]").forEach((btn) =>
       btn.addEventListener("click", () => {
-        cart.splice(Number(btn.dataset.remove), 1);
-        renderCart();
+        paymentMethod = btn.dataset.tender;
+        renderTenderRow();
       })
     );
   }
-
-  document.getElementById("add-line-btn").addEventListener("click", () => {
-    const productId = Number(productSelect.value);
-    const product = products.find((p) => p.id === productId);
-    const qty = Number(document.getElementById("line-qty").value);
-    const price = Number(priceInput.value);
-
-    if (!product) return showMsg("Select a product", "error");
-    if (!qty || qty <= 0) return showMsg("Enter a valid quantity", "error");
-
-    cart.push({ product_id: productId, name: product.name, quantity: qty, unit_price: price });
-    renderCart();
-  });
+  renderTenderRow();
 
   document.getElementById("submit-sale-btn").addEventListener("click", async () => {
     if (cart.length === 0) return showMsg("Add at least one item to the sale", "error");
     try {
       const sale = await api.post("/sales", {
         customer_name: document.getElementById("customer_name").value || null,
-        payment_method: document.getElementById("payment_method").value,
+        payment_method: paymentMethod,
         items: cart.map((c) => ({ product_id: c.product_id, quantity: c.quantity, unit_price: c.unit_price })),
       });
       showMsg("Sale completed", "success");
@@ -114,6 +264,8 @@
       showMsg(err.message, "error");
     }
   });
+
+  // ---------- Recent sales table (unchanged behavior) ----------
 
   let lastSales = [];
   let salesOffset = 0;
@@ -214,5 +366,6 @@
     }
   });
 
+  renderCart();
   Promise.all([loadProducts(), loadSales()]).catch((err) => showMsg(err.message, "error"));
 })();
