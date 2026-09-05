@@ -121,7 +121,6 @@ def inventory_valuation(
     items = [
         {
             "id": p.id,
-            "sku": p.sku,
             "name": p.name,
             "quantity_on_hand": p.quantity_on_hand,
             "cost_price": p.cost_price,
@@ -335,7 +334,6 @@ def top_products(
     query = (
         db.query(
             models.Product.id,
-            models.Product.sku,
             models.Product.name,
             qty_expr,
             revenue_expr,
@@ -351,19 +349,18 @@ def top_products(
     )
     if branch_filter is not None:
         query = query.filter(models.Sale.branch_id == branch_filter)
-    rows = query.group_by(models.Product.id, models.Product.sku, models.Product.name).all()
+    rows = query.group_by(models.Product.id, models.Product.name).all()
 
     items = [
         {
             "product_id": pid,
-            "sku": sku,
             "name": name,
             "quantity_sold": qty or 0.0,
             "revenue": revenue or 0.0,
             "profit": profit or 0.0,
             "margin_pct": ((profit / revenue) * 100) if revenue else None,
         }
-        for pid, sku, name, qty, revenue, profit in rows
+        for pid, name, qty, revenue, profit in rows
     ]
 
     return {

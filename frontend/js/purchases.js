@@ -18,7 +18,7 @@
   async function loadProducts() {
     products = await api.get("/products");
     productSelect.innerHTML = products
-      .map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.sku)})</option>`)
+      .map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
       .join("");
     if (products.length > 0) costInput.value = products[0].cost_price;
   }

@@ -35,7 +35,7 @@
       '<option value="">— standalone product —</option>' +
       products
         .filter((p) => p.id !== excludeId)
-        .map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.sku)})</option>`)
+        .map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
         .join("");
   }
 
@@ -44,7 +44,6 @@
     document.getElementById("product-id").value = "";
     document.getElementById("unit").value = "pcs";
     formTitle.textContent = "Add Product";
-    document.getElementById("sku").disabled = false;
     document.getElementById("quantity_on_hand").disabled = false;
     populateParentSelect(null);
     cancelBtn.classList.add("hidden");
@@ -52,8 +51,6 @@
 
   function fillForm(p) {
     document.getElementById("product-id").value = p.id;
-    document.getElementById("sku").value = p.sku;
-    document.getElementById("sku").disabled = true;
     document.getElementById("barcode").value = p.barcode || "";
     document.getElementById("name").value = p.name;
     document.getElementById("category").value = p.category || "";
@@ -80,7 +77,7 @@
 
   function populateProductFilters() {
     const options = products
-      .map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.sku)})</option>`)
+      .map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
       .join("");
     if (canEdit) adjProductSelect.innerHTML = options;
     mvProductFilter.innerHTML = '<option value="">All products</option>' + options;
@@ -88,7 +85,7 @@
 
   function matchesSearch(p, term) {
     if (!term) return true;
-    return [p.name, p.sku, p.barcode, p.category].some(
+    return [p.name, p.barcode, p.category].some(
       (field) => field && field.toLowerCase().includes(term)
     );
   }
@@ -280,7 +277,7 @@
       return;
     }
     if (filtered.length === 0) {
-      body.innerHTML = '<tr><td colspan="10">No products match your filters</td></tr>';
+      body.innerHTML = '<tr><td colspan="9">No products match your filters</td></tr>';
       renderBulkBar();
       return;
     }
@@ -293,7 +290,6 @@
       if (selected) tr.classList.add("selected");
       tr.innerHTML = `
         <td><input type="checkbox" data-select="${p.id}" ${selected ? "checked" : ""} /></td>
-        <td class="prod-sku">${escapeHtml(p.sku)}</td>
         <td class="prod-name">${productLabel(p)}</td>
         <td><span class="cat-pill">${escapeHtml(categoryOf(p))}</span></td>
         <td>${escapeHtml(p.unit) || "-"}</td>
@@ -376,7 +372,6 @@
           showMsg("Product updated", "success");
         } else {
           await api.post("/products", {
-            sku: document.getElementById("sku").value,
             barcode: document.getElementById("barcode").value || null,
             name: document.getElementById("name").value,
             category: document.getElementById("category").value,
@@ -431,7 +426,7 @@
       const sign = m.quantity_delta > 0 ? "+" : "";
       tr.innerHTML = `
         <td>${fmtDate(m.created_at)}</td>
-        <td>${m.product ? `${escapeHtml(m.product.name)} (${escapeHtml(m.product.sku)})` : `#${m.product_id}`}</td>
+        <td>${m.product ? escapeHtml(m.product.name) : `#${m.product_id}`}</td>
         <td>${escapeHtml(m.movement_type)}</td>
         <td>${sign}${m.quantity_delta}</td>
         <td>${m.balance_after}</td>
@@ -487,7 +482,6 @@
   }
 
   const PRODUCT_CSV_COLUMNS = [
-    { key: "sku", label: "SKU" },
     { key: "barcode", label: "Barcode" },
     { key: "name", label: "Name" },
     { key: "category", label: "Category" },
@@ -517,7 +511,7 @@
         (p) => `
           <div class="label">
             <div class="label-name">${escapeHtml(p.name)}</div>
-            <div class="label-sku">${escapeHtml(p.sku)}${p.barcode ? " · " + escapeHtml(p.barcode) : ""}</div>
+            ${p.barcode ? `<div class="label-barcode">${escapeHtml(p.barcode)}</div>` : ""}
             <div class="label-price">${fmtMoney(p.sell_price)}</div>
           </div>`
       )

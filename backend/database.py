@@ -37,17 +37,15 @@ def run_auto_migrations():
                 col_type = column.type.compile(engine.dialect)
                 conn.execute(text(f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {col_type}'))
 
-        # products.sku used to be globally unique; it's now unique per-branch instead.
-        # Drop the old global unique index left over from before branches existed, and
-        # add the new composite one (safe to run every startup; sku was already unique
-        # so this never conflicts with existing data).
+        # products.sku was removed; drop the leftover column and its indexes from
+        # existing databases (no-op on a fresh one that never had the column).
         if inspector.has_table("products"):
-            for idx in inspector.get_indexes("products"):
-                if idx["name"] == "ix_products_sku" and idx.get("unique"):
-                    conn.execute(text('DROP INDEX IF EXISTS "ix_products_sku"'))
-            conn.execute(
-                text('CREATE UNIQUE INDEX IF NOT EXISTS "uq_products_branch_sku" ON "products" ("branch_id", "sku")')
-            )
+            product_cols = {col["name"] for col in inspector.get_columns("products")}
+            if "sku" in product_cols:
+                for idx in inspector.get_indexes("products"):
+                    if "sku" in idx["column_names"]:
+                        conn.execute(text(f'DROP INDEX IF EXISTS "{idx["name"]}"'))
+                conn.execute(text('ALTER TABLE "products" DROP COLUMN "sku"'))
 
         # branches.code used to be globally unique (single-company); it's now unique
         # per-company instead, so every company can have its own "HQ" branch code.

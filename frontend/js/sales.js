@@ -67,7 +67,7 @@
     const filtered = products.filter((p) => {
       if (activeCategory !== "__all__" && categoryOf(p) !== activeCategory) return false;
       if (!term) return true;
-      return [p.name, p.sku, p.barcode].some((f) => f && f.toLowerCase().includes(term));
+      return [p.name, p.barcode].some((f) => f && f.toLowerCase().includes(term));
     });
 
     const grid = document.getElementById("tile-grid");

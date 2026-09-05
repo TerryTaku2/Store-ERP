@@ -1,3 +1,4 @@
+import mimetypes
 import os
 
 from fastapi import FastAPI
@@ -117,6 +118,8 @@ app.include_router(reports.router)
 app.include_router(dashboard.router)
 app.include_router(audit.router)
 app.include_router(inventory.router)
+
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

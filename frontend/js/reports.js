@@ -116,23 +116,23 @@
     const demandedBody = document.getElementById("most-demanded-body");
     demandedBody.innerHTML = "";
     if (tp.most_demanded.length === 0) {
-      demandedBody.innerHTML = '<tr><td colspan="5">No sales in this period</td></tr>';
+      demandedBody.innerHTML = '<tr><td colspan="4">No sales in this period</td></tr>';
     }
     tp.most_demanded.forEach((p) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${escapeHtml(p.sku)}</td><td>${escapeHtml(p.name)}</td><td>${p.quantity_sold}</td><td>${fmtMoney(p.revenue)}</td><td>${fmtMoney(p.profit)}</td>`;
+      tr.innerHTML = `<td>${escapeHtml(p.name)}</td><td>${p.quantity_sold}</td><td>${fmtMoney(p.revenue)}</td><td>${fmtMoney(p.profit)}</td>`;
       demandedBody.appendChild(tr);
     });
 
     const profitableBody = document.getElementById("most-profitable-body");
     profitableBody.innerHTML = "";
     if (tp.most_profitable.length === 0) {
-      profitableBody.innerHTML = '<tr><td colspan="6">No sales in this period</td></tr>';
+      profitableBody.innerHTML = '<tr><td colspan="5">No sales in this period</td></tr>';
     }
     tp.most_profitable.forEach((p) => {
       const tr = document.createElement("tr");
       const margin = p.margin_pct === null || p.margin_pct === undefined ? "-" : `${p.margin_pct.toFixed(1)}%`;
-      tr.innerHTML = `<td>${escapeHtml(p.sku)}</td><td>${escapeHtml(p.name)}</td><td>${p.quantity_sold}</td><td>${fmtMoney(p.revenue)}</td><td>${fmtMoney(p.profit)}</td><td>${margin}</td>`;
+      tr.innerHTML = `<td>${escapeHtml(p.name)}</td><td>${p.quantity_sold}</td><td>${fmtMoney(p.revenue)}</td><td>${fmtMoney(p.profit)}</td><td>${margin}</td>`;
       profitableBody.appendChild(tr);
     });
   }
@@ -172,11 +172,11 @@
     const invBody = document.getElementById("inventory-body");
     invBody.innerHTML = "";
     if (inv.items.length === 0) {
-      invBody.innerHTML = '<tr><td colspan="5">No products yet</td></tr>';
+      invBody.innerHTML = '<tr><td colspan="4">No products yet</td></tr>';
     }
     inv.items.forEach((i) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${escapeHtml(i.sku)}</td><td>${escapeHtml(i.name)}</td><td>${i.quantity_on_hand}</td><td>${fmtMoney(i.cost_price)}</td><td>${fmtMoney(i.value)}</td>`;
+      tr.innerHTML = `<td>${escapeHtml(i.name)}</td><td>${i.quantity_on_hand}</td><td>${fmtMoney(i.cost_price)}</td><td>${fmtMoney(i.value)}</td>`;
       invBody.appendChild(tr);
     });
 
@@ -207,7 +207,6 @@
     exportCSV(
       "inventory-valuation.csv",
       [
-        { key: "sku", label: "SKU" },
         { key: "name", label: "Product" },
         { key: "quantity_on_hand", label: "Qty on Hand" },
         { key: "cost_price", label: "Cost Price" },

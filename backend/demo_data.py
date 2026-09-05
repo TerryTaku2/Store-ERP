@@ -17,38 +17,38 @@ DEMO_STAFF_PASSWORD = "demo1234"
 _RNG_SEED = 42
 
 HQ_PRODUCTS = [
-    ("001", "Bottled Water 500ml", "Beverages", 0.30, 0.75, 40),
-    ("002", "Cola Can 330ml", "Beverages", 0.40, 1.00, 40),
-    ("003", "Potato Chips 150g", "Snacks", 0.80, 1.80, 20),
-    ("004", "Chocolate Bar", "Snacks", 0.50, 1.20, 25),
-    ("005", "White Bread Loaf", "Groceries", 1.00, 2.20, 15),
-    ("006", "Milk 1L", "Groceries", 0.90, 1.60, 20),
-    ("007", "Eggs (Dozen)", "Groceries", 1.80, 3.00, 15),
-    ("008", "Rice 5kg Bag", "Groceries", 4.50, 7.50, 10),
-    ("009", "Dish Soap 500ml", "Household", 1.20, 2.50, 10),
-    ("010", "AA Batteries (4pk)", "Electronics", 1.50, 3.50, 8),
-    ("011", "USB Cable", "Electronics", 1.00, 4.00, 8),
-    ("012", "Phone Charger", "Electronics", 3.00, 8.00, 6),
+    ("Bottled Water 500ml", "Beverages", 0.30, 0.75, 40),
+    ("Cola Can 330ml", "Beverages", 0.40, 1.00, 40),
+    ("Potato Chips 150g", "Snacks", 0.80, 1.80, 20),
+    ("Chocolate Bar", "Snacks", 0.50, 1.20, 25),
+    ("White Bread Loaf", "Groceries", 1.00, 2.20, 15),
+    ("Milk 1L", "Groceries", 0.90, 1.60, 20),
+    ("Eggs (Dozen)", "Groceries", 1.80, 3.00, 15),
+    ("Rice 5kg Bag", "Groceries", 4.50, 7.50, 10),
+    ("Dish Soap 500ml", "Household", 1.20, 2.50, 10),
+    ("AA Batteries (4pk)", "Electronics", 1.50, 3.50, 8),
+    ("USB Cable", "Electronics", 1.00, 4.00, 8),
+    ("Phone Charger", "Electronics", 3.00, 8.00, 6),
 ]
 
 RIVERSIDE_PRODUCTS = [
-    ("001", "Bottled Water 500ml", "Beverages", 0.32, 0.80, 30),
-    ("002", "Orange Juice 1L", "Beverages", 1.10, 2.20, 15),
-    ("003", "Tortilla Chips 200g", "Snacks", 0.90, 2.00, 20),
-    ("004", "Granola Bar", "Snacks", 0.45, 1.10, 25),
-    ("005", "Sourdough Loaf", "Groceries", 1.50, 3.00, 10),
-    ("006", "Cheddar Cheese 250g", "Groceries", 2.20, 4.00, 12),
-    ("007", "Free-range Eggs (Dozen)", "Groceries", 2.20, 3.80, 10),
-    ("008", "Pasta 500g", "Groceries", 0.80, 1.80, 20),
+    ("Bottled Water 500ml", "Beverages", 0.32, 0.80, 30),
+    ("Orange Juice 1L", "Beverages", 1.10, 2.20, 15),
+    ("Tortilla Chips 200g", "Snacks", 0.90, 2.00, 20),
+    ("Granola Bar", "Snacks", 0.45, 1.10, 25),
+    ("Sourdough Loaf", "Groceries", 1.50, 3.00, 10),
+    ("Cheddar Cheese 250g", "Groceries", 2.20, 4.00, 12),
+    ("Free-range Eggs (Dozen)", "Groceries", 2.20, 3.80, 10),
+    ("Pasta 500g", "Groceries", 0.80, 1.80, 20),
 ]
 
 AIRPORT_PRODUCTS = [
-    ("001", "Bottled Water 500ml", "Beverages", 0.50, 2.50, 15),
-    ("002", "Energy Drink 250ml", "Beverages", 0.90, 3.50, 12),
-    ("003", "Trail Mix Pack", "Snacks", 1.20, 4.00, 10),
-    ("004", "Neck Pillow", "Travel", 3.00, 12.00, 5),
-    ("005", "Earplugs Set", "Travel", 0.80, 3.00, 10),
-    ("006", "Phone Charger Cable", "Electronics", 2.00, 9.00, 5),
+    ("Bottled Water 500ml", "Beverages", 0.50, 2.50, 15),
+    ("Energy Drink 250ml", "Beverages", 0.90, 3.50, 12),
+    ("Trail Mix Pack", "Snacks", 1.20, 4.00, 10),
+    ("Neck Pillow", "Travel", 3.00, 12.00, 5),
+    ("Earplugs Set", "Travel", 0.80, 3.00, 10),
+    ("Phone Charger Cable", "Electronics", 2.00, 9.00, 5),
 ]
 
 
@@ -177,10 +177,10 @@ def _create_branch(db, company, name, code, is_admin, enabled_modules) -> models
 
 def _seed_branch(db, rng, today, company, branch, cashiers, products, with_purchases, with_expenses, sale_count):
     product_rows = []
-    for suffix, name, category, cost, sell, reorder in products:
+    for name, category, cost, sell, reorder in products:
         p = models.Product(
             company_id=company.id, branch_id=branch.id,
-            sku=f"{branch.code}-{suffix}", name=name, category=category, unit="pcs",
+            name=name, category=category, unit="pcs",
             cost_price=cost, sell_price=sell, quantity_on_hand=0, reorder_level=reorder,
         )
         db.add(p)

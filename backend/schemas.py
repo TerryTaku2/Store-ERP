@@ -123,7 +123,6 @@ class ThemeUpdate(BaseModel):
 # ---------- Products ----------
 
 class ProductBase(BaseModel):
-    sku: str
     barcode: Optional[str] = None
     name: str
     category: Optional[str] = None

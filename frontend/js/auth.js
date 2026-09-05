@@ -31,6 +31,31 @@ const NAV_SECTIONS = [
   },
 ];
 
+let deferredInstallPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  updateInstallUI();
+});
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  updateInstallUI();
+});
+
+function isIos() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+function isStandaloneDisplay() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+function updateInstallUI() {
+  const installBtn = document.getElementById("install-app-btn");
+  const iosHint = document.getElementById("install-ios-hint");
+  if (!installBtn || !iosHint) return;
+  installBtn.classList.toggle("hidden", !deferredInstallPrompt);
+  iosHint.classList.toggle("hidden", !(isIos() && !isStandaloneDisplay() && !deferredInstallPrompt));
+}
+
 const THEME_OPTIONS = [
   { value: "dark-engineering", label: "Dark Engineering" },
   { value: "warm-minimal", label: "Warm Minimal" },
@@ -122,11 +147,23 @@ function renderSidebar(activeHref) {
         <div style="margin-top:6px;font-size:0.75rem;color:var(--sidebar-text);">${escapeHtml(session.branchName) || ""}</div>
         ${branchSwitcher}
         ${themeSwitcher}
+        <button class="logout-btn hidden" id="install-app-btn" style="margin-top:8px;">Install App</button>
+        <div class="hidden" id="install-ios-hint" style="margin-top:8px;font-size:0.72rem;color:var(--sidebar-text);line-height:1.4;">Install: tap Share, then "Add to Home Screen".</div>
         <button class="logout-btn" id="change-password-btn" style="margin-top:8px;">Change Password</button>
         <button class="logout-btn" onclick="logout()">Log out</button>
       </div>
     </div>
   `;
+
+  updateInstallUI();
+
+  document.getElementById("install-app-btn").addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    updateInstallUI();
+  });
 
   const switcher = document.getElementById("branch-switcher");
   if (switcher) {

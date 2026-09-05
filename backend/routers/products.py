@@ -46,10 +46,6 @@ def create_product(
     current_user: models.User = Depends(security.require_role("admin", "manager")),
     active_branch: models.Branch = Depends(security.get_active_branch),
 ):
-    if db.query(models.Product).filter(
-        models.Product.sku == payload.sku, models.Product.branch_id == active_branch.id
-    ).first():
-        raise HTTPException(status_code=400, detail="SKU already exists")
     if payload.barcode and db.query(models.Product).filter(
         models.Product.barcode == payload.barcode, models.Product.branch_id == active_branch.id
     ).first():
@@ -64,7 +60,7 @@ def create_product(
     db.flush()
     audit.log(
         db, "create", "product", product.id,
-        summary=f"Created product '{product.name}' ({product.sku})",
+        summary=f"Created product '{product.name}'",
         user=current_user,
     )
     db.commit()
@@ -131,7 +127,7 @@ def delete_product(
         raise HTTPException(status_code=404, detail="Product not found")
     audit.log(
         db, "delete", "product", product.id,
-        summary=f"Deleted product '{product.name}' ({product.sku})",
+        summary=f"Deleted product '{product.name}'",
         user=current_user,
     )
     db.delete(product)

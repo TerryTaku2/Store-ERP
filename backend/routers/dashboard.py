@@ -228,7 +228,7 @@ def branches_overview(
             "low_stock_count": len(low_stock_products),
             "low_stock_items": [
                 {
-                    "product_id": p.id, "sku": p.sku, "name": p.name,
+                    "product_id": p.id, "name": p.name,
                     "quantity_on_hand": p.quantity_on_hand, "reorder_level": p.reorder_level,
                 }
                 for p in low_stock_products[:5]

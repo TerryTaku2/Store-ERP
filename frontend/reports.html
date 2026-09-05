@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="/icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="T-Tech Connect" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reports · T-Tech Connect</title>
   <link rel="stylesheet" href="/css/style.css" />
@@ -67,7 +74,7 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>SKU</th><th>Product</th><th>Qty on Hand</th><th>Cost Price</th><th>Value</th></tr></thead>
+              <thead><tr><th>Product</th><th>Qty on Hand</th><th>Cost Price</th><th>Value</th></tr></thead>
               <tbody id="inventory-body"></tbody>
             </table>
           </div>
@@ -126,7 +133,7 @@
           <h3>Most Demanded Products <span style="font-weight:normal;color:var(--text-muted);">(by quantity sold)</span></h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>SKU</th><th>Product</th><th>Qty Sold</th><th>Revenue</th><th>Profit</th></tr></thead>
+              <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th><th>Profit</th></tr></thead>
               <tbody id="most-demanded-body"></tbody>
             </table>
           </div>
@@ -136,7 +143,7 @@
           <h3>Most Profitable Products <span style="font-weight:normal;color:var(--text-muted);">(by gross profit)</span></h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>SKU</th><th>Product</th><th>Qty Sold</th><th>Revenue</th><th>Profit</th><th>Margin</th></tr></thead>
+              <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th><th>Profit</th><th>Margin</th></tr></thead>
               <tbody id="most-profitable-body"></tbody>
             </table>
           </div>
