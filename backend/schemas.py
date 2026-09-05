@@ -159,6 +159,11 @@ class ProductOut(ProductBase):
     created_at: datetime
 
 
+class ProductLookupOut(BaseModel):
+    match: str  # "branch" | "company" | "none"
+    product: Optional[ProductOut] = None
+
+
 # ---------- Purchases ----------
 
 class PurchaseItemCreate(BaseModel):

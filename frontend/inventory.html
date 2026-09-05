@@ -29,7 +29,13 @@
         <form id="product-form">
           <input type="hidden" id="product-id" />
           <div class="form-row">
-            <div class="field"><label>Barcode</label><input id="barcode" placeholder="optional" /></div>
+            <div class="field">
+              <label>Barcode</label>
+              <div style="display:flex;gap:6px;">
+                <input id="barcode" placeholder="optional — scan or type then Enter" autocomplete="off" style="flex:1;" />
+                <button type="button" class="secondary" id="scan-barcode-btn" style="white-space:nowrap;">Scan</button>
+              </div>
+            </div>
             <div class="field"><label>Name</label><input id="name" required /></div>
             <div class="field"><label>Category</label><input id="category" /></div>
             <div class="field"><label>Unit</label><input id="unit" value="pcs" /></div>
@@ -168,9 +174,11 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="/js/vendor/feather.min.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/barcode-scanner.js"></script>
   <script src="/js/inventory.js"></script>
 </body>
 </html>

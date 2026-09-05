@@ -39,6 +39,33 @@ def get_product_by_barcode(
     return product
 
 
+@router.get("/lookup/{barcode}", response_model=schemas.ProductLookupOut)
+def lookup_product_by_barcode(
+    barcode: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(security.require_role("admin", "manager")),
+    active_branch: models.Branch = Depends(security.get_active_branch),
+):
+    """Look up a scanned barcode for the Add Product form: an exact match in the
+    active branch means this stock already exists here (caller should switch to
+    editing it instead of creating a duplicate); a match in another branch of the
+    same company means the item is known and its details can be prefilled."""
+    product = db.query(models.Product).filter(
+        models.Product.barcode == barcode, models.Product.branch_id == active_branch.id
+    ).first()
+    if product:
+        return {"match": "branch", "product": product}
+    product = (
+        db.query(models.Product)
+        .filter(models.Product.barcode == barcode, models.Product.company_id == active_branch.company_id)
+        .order_by(models.Product.created_at.desc())
+        .first()
+    )
+    if product:
+        return {"match": "company", "product": product}
+    return {"match": "none", "product": None}
+
+
 @router.post("", response_model=schemas.ProductOut, status_code=status.HTTP_201_CREATED)
 def create_product(
     payload: schemas.ProductCreate,

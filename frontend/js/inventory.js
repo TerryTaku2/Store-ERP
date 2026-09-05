@@ -348,8 +348,46 @@
 
   document.getElementById("product-search").addEventListener("input", renderProductsTable);
 
+  async function handleBarcodeScan(code) {
+    if (!code) return;
+    const barcodeInput = document.getElementById("barcode");
+    barcodeInput.value = code;
+    if (document.getElementById("product-id").value) return; // editing an existing product — just set the barcode
+
+    try {
+      const result = await api.get(`/products/lookup/${encodeURIComponent(code)}`);
+      if (result.match === "branch") {
+        fillForm(result.product);
+        showMsg(`'${escapeHtml(result.product.name)}' already exists in this branch — editing it instead`, "success");
+      } else if (result.match === "company") {
+        const p = result.product;
+        document.getElementById("name").value = p.name;
+        document.getElementById("category").value = p.category || "";
+        document.getElementById("unit").value = p.unit || "pcs";
+        document.getElementById("cost_price").value = p.cost_price;
+        document.getElementById("sell_price").value = p.sell_price;
+        document.getElementById("reorder_level").value = p.reorder_level;
+        showMsg(`Filled details from '${escapeHtml(p.name)}' in another branch — review before saving`, "success");
+      } else {
+        showMsg("New barcode — enter the product details", "success");
+      }
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
+  }
+
   if (canEdit) {
     cancelBtn.addEventListener("click", resetForm);
+
+    document.getElementById("barcode").addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      handleBarcodeScan(e.target.value.trim());
+    });
+
+    document.getElementById("scan-barcode-btn").addEventListener("click", () => {
+      openCameraScanner((code) => handleBarcodeScan(code));
+    });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
