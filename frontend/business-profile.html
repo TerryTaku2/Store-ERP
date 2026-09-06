@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="/icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="T-Tech Connect" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Profile · T-Tech Connect</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Business Profile</h1>
+      </header>
+
+      <div id="msg-box"></div>
+
+      <div class="panel" style="max-width:520px;">
+        <h3>Identity</h3>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:-6px;">
+          Your logo and business name appear in the sidebar on every page, so staff always know which business they're working in.
+        </p>
+
+        <form id="profile-form">
+          <div class="field">
+            <label>Logo</label>
+            <div style="display:flex;align-items:center;gap:14px;margin-top:6px;">
+              <img id="logo-preview" alt="" style="width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--overlay-mid);display:none;" />
+              <div id="logo-placeholder" style="width:64px;height:64px;border-radius:10px;background:var(--overlay-mid);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.7rem;text-align:center;">No logo</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp,image/gif" />
+                <button type="button" class="secondary hidden" id="remove-logo-btn" style="width:fit-content;">Remove logo</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:16px;">
+            <label>Business name</label>
+            <input id="business-name" required />
+          </div>
+
+          <button type="submit" id="save-profile-btn">Save</button>
+        </form>
+      </div>
+
+      <div class="panel" style="max-width:520px;">
+        <h3>Sidebar preview</h3>
+        <div id="brand-preview" style="border:1px solid var(--sidebar-border);border-radius:10px;overflow:hidden;max-width:280px;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/business-profile.js"></script>
+</body>
+</html>

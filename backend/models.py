@@ -31,6 +31,7 @@ class Company(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
+    logo = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     is_demo = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -105,8 +106,6 @@ class Product(Base):
     sell_price = Column(Float, nullable=False, default=0)
     quantity_on_hand = Column(Float, nullable=False, default=0)
     reorder_level = Column(Float, nullable=False, default=0)
-    parent_product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
-    variant_attributes = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

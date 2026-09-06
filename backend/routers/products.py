@@ -77,11 +77,6 @@ def create_product(
         models.Product.barcode == payload.barcode, models.Product.branch_id == active_branch.id
     ).first():
         raise HTTPException(status_code=400, detail="Barcode already exists")
-    if payload.parent_product_id is not None:
-        if not db.query(models.Product).filter(
-            models.Product.id == payload.parent_product_id, models.Product.branch_id == active_branch.id
-        ).first():
-            raise HTTPException(status_code=404, detail="Parent product not found")
     product = models.Product(**payload.model_dump(), branch_id=active_branch.id, company_id=active_branch.company_id)
     db.add(product)
     db.flush()
@@ -116,13 +111,6 @@ def update_product(
         ).first()
         if clash:
             raise HTTPException(status_code=400, detail="Barcode already exists")
-    if payload.parent_product_id is not None:
-        if payload.parent_product_id == product_id:
-            raise HTTPException(status_code=400, detail="A product cannot be its own parent")
-        if not db.query(models.Product).filter(
-            models.Product.id == payload.parent_product_id, models.Product.branch_id == active_branch.id
-        ).first():
-            raise HTTPException(status_code=404, detail="Parent product not found")
     changes = []
     for key, value in payload.model_dump(exclude_unset=True).items():
         old = getattr(product, key)

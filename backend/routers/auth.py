@@ -31,6 +31,7 @@ def _build_token(
         full_name=user.full_name,
         username=user.username,
         company_name=company.name if company else None,
+        company_logo=company.logo if company else None,
         theme=user.theme or "dark-engineering",
         branch_id=branch.id if branch else None,
         branch_name=branch.name if branch else None,

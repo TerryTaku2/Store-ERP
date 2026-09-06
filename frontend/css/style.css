@@ -170,11 +170,34 @@ a:hover { color: var(--primary-dark); }
   border-bottom: 1px solid var(--sidebar-border);
 }
 
-.sidebar .brand .brand-business {
-  font-weight: 500;
-  font-size: 0.75rem;
+.sidebar .brand-row { display: flex; align-items: center; gap: 10px; }
+
+.sidebar .brand-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.sidebar .brand-business-name {
+  font-weight: 800;
+  font-size: 1.2rem;
+  line-height: 1.2;
+  color: var(--sidebar-fg);
+  overflow-wrap: anywhere;
+}
+
+.sidebar .brand-powered-by {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: .4px;
+  text-transform: uppercase;
   color: var(--sidebar-text);
-  margin-top: 4px;
+  opacity: .65;
 }
 
 .nav-section { padding: 14px 12px 2px; }

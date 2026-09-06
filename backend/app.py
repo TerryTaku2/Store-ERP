@@ -9,7 +9,7 @@ from database import Base, engine, SessionLocal, run_auto_migrations
 import demo_data
 import models
 import provisioning
-from routers import auth, users, products, purchases, sales, expenses, reports, dashboard, audit, inventory, branches, companies
+from routers import auth, users, products, purchases, sales, expenses, reports, dashboard, audit, inventory, branches, companies, company_profile
 
 Base.metadata.create_all(bind=engine)
 run_auto_migrations()
@@ -110,6 +110,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(branches.router)
 app.include_router(companies.router)
+app.include_router(company_profile.router)
 app.include_router(products.router)
 app.include_router(purchases.router)
 app.include_router(sales.router)

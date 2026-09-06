@@ -14,7 +14,6 @@
   const formTitle = document.getElementById("form-title");
   const cancelBtn = document.getElementById("cancel-edit-btn");
   const msgBox = document.getElementById("msg-box");
-  const parentSelect = document.getElementById("parent_product_id");
 
   const adjustmentPanel = document.getElementById("adjustment-panel");
   const adjProductSelect = document.getElementById("adj-product");
@@ -30,22 +29,12 @@
     setTimeout(() => (msgBox.innerHTML = ""), 4000);
   }
 
-  function populateParentSelect(excludeId) {
-    parentSelect.innerHTML =
-      '<option value="">— standalone product —</option>' +
-      products
-        .filter((p) => p.id !== excludeId)
-        .map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
-        .join("");
-  }
-
   function resetForm() {
     form.reset();
     document.getElementById("product-id").value = "";
     document.getElementById("unit").value = "pcs";
     formTitle.textContent = "Add Product";
     document.getElementById("quantity_on_hand").disabled = false;
-    populateParentSelect(null);
     cancelBtn.classList.add("hidden");
   }
 
@@ -60,19 +49,9 @@
     document.getElementById("quantity_on_hand").value = p.quantity_on_hand;
     document.getElementById("quantity_on_hand").disabled = true;
     document.getElementById("reorder_level").value = p.reorder_level;
-    populateParentSelect(p.id);
-    parentSelect.value = p.parent_product_id || "";
-    document.getElementById("variant_attributes").value = p.variant_attributes || "";
     formTitle.textContent = `Edit Product: ${p.name}`;
     cancelBtn.classList.remove("hidden");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function productLabel(p) {
-    if (!p.parent_product_id) return escapeHtml(p.name);
-    const parent = products.find((x) => x.id === p.parent_product_id);
-    const parentName = parent ? parent.name : `#${p.parent_product_id}`;
-    return `${escapeHtml(p.name)}<br><span style="color:var(--text-muted);font-size:0.78rem;">Variant of ${escapeHtml(parentName)}${p.variant_attributes ? " — " + escapeHtml(p.variant_attributes) : ""}</span>`;
   }
 
   function populateProductFilters() {
@@ -290,7 +269,7 @@
       if (selected) tr.classList.add("selected");
       tr.innerHTML = `
         <td><input type="checkbox" data-select="${p.id}" ${selected ? "checked" : ""} /></td>
-        <td class="prod-name">${productLabel(p)}</td>
+        <td class="prod-name">${escapeHtml(p.name)}</td>
         <td><span class="cat-pill">${escapeHtml(categoryOf(p))}</span></td>
         <td>${escapeHtml(p.unit) || "-"}</td>
         <td>${renderEditableCell(p, "cost_price", money)}</td>
@@ -338,9 +317,6 @@
 
   async function loadProducts() {
     products = await api.get("/products");
-    if (canEdit && document.getElementById("product-id").value === "") {
-      populateParentSelect(null);
-    }
     populateProductFilters();
     renderFilterLists();
     renderProductsTable();
@@ -392,7 +368,6 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const id = document.getElementById("product-id").value;
-      const parentValue = parentSelect.value ? Number(parentSelect.value) : null;
 
       try {
         if (id) {
@@ -404,8 +379,6 @@
             cost_price: Number(document.getElementById("cost_price").value),
             sell_price: Number(document.getElementById("sell_price").value),
             reorder_level: Number(document.getElementById("reorder_level").value),
-            parent_product_id: parentValue,
-            variant_attributes: document.getElementById("variant_attributes").value || null,
           });
           showMsg("Product updated", "success");
         } else {
@@ -418,8 +391,6 @@
             sell_price: Number(document.getElementById("sell_price").value),
             quantity_on_hand: Number(document.getElementById("quantity_on_hand").value),
             reorder_level: Number(document.getElementById("reorder_level").value),
-            parent_product_id: parentValue,
-            variant_attributes: document.getElementById("variant_attributes").value || null,
           });
           showMsg("Product created", "success");
         }
@@ -528,7 +499,6 @@
     { key: "sell_price", label: "Sell Price" },
     { key: "quantity_on_hand", label: "Qty on Hand" },
     { key: "reorder_level", label: "Reorder Level" },
-    { key: "variant_attributes", label: "Variant Attributes" },
   ];
 
   document.getElementById("export-products-btn").addEventListener("click", () => {

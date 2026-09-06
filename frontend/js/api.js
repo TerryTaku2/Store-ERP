@@ -21,6 +21,7 @@ function getSession() {
     fullName: localStorage.getItem("full_name"),
     username: localStorage.getItem("username"),
     companyName: localStorage.getItem("company_name"),
+    companyLogo: localStorage.getItem("company_logo") || null,
     theme: localStorage.getItem("theme") || "dark-engineering",
     branchId: Number(localStorage.getItem("branch_id")) || null,
     branchName: localStorage.getItem("branch_name"),
@@ -37,6 +38,11 @@ function storeSession(data) {
   localStorage.setItem("full_name", data.full_name);
   localStorage.setItem("username", data.username);
   localStorage.setItem("company_name", data.company_name || "");
+  if (data.company_logo) {
+    localStorage.setItem("company_logo", data.company_logo);
+  } else {
+    localStorage.removeItem("company_logo");
+  }
   localStorage.setItem("theme", data.theme || "dark-engineering");
   localStorage.setItem("branch_id", data.branch_id);
   localStorage.setItem("branch_name", data.branch_name || "");
@@ -52,6 +58,7 @@ function clearSession() {
   localStorage.removeItem("full_name");
   localStorage.removeItem("username");
   localStorage.removeItem("company_name");
+  localStorage.removeItem("company_logo");
   localStorage.removeItem("theme");
   localStorage.removeItem("branch_id");
   localStorage.removeItem("branch_name");

@@ -22,9 +22,15 @@ class CompanyOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str
+    logo: Optional[str] = None
     is_active: bool
     is_demo: bool = False
     created_at: datetime
+
+
+class CompanyProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    logo: Optional[str] = None
 
 
 # ---------- Branches ----------
@@ -78,6 +84,7 @@ class Token(BaseModel):
     full_name: str
     username: str
     company_name: Optional[str] = None
+    company_logo: Optional[str] = None
     theme: str = "dark-engineering"
     branch_id: Optional[int] = None
     branch_name: Optional[str] = None
@@ -130,8 +137,6 @@ class ProductBase(BaseModel):
     cost_price: float = 0
     sell_price: float = 0
     reorder_level: float = 0
-    parent_product_id: Optional[int] = None
-    variant_attributes: Optional[str] = None
 
 
 class ProductCreate(ProductBase):
@@ -147,8 +152,6 @@ class ProductUpdate(BaseModel):
     sell_price: Optional[float] = None
     reorder_level: Optional[float] = None
     quantity_on_hand: Optional[float] = None
-    parent_product_id: Optional[int] = None
-    variant_attributes: Optional[str] = None
 
 
 class ProductOut(ProductBase):

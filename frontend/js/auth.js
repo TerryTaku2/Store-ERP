@@ -23,6 +23,7 @@ const NAV_SECTIONS = [
   {
     label: "Admin",
     links: [
+      { href: "/business-profile.html", label: "Business Profile", icon: "image", roles: ["admin"] },
       { href: "/branches.html", label: "Branches", icon: "git-branch", roles: ["admin"], adminBranchOnly: true },
       { href: "/users.html", label: "User Management", icon: "settings", roles: ["admin"], adminBranchOnly: true },
       { href: "/audit-log.html", label: "Audit Log", icon: "activity", roles: ["admin"] },
@@ -208,10 +209,20 @@ function renderSidebar(activeHref) {
     THEME_OPTIONS.map((t) => `<option value="${t.value}" ${t.value === session.theme ? "selected" : ""}>${t.label}</option>`).join("") +
     `</select>`;
 
+  const brand = session.companyName
+    ? `<div class="brand">
+        <div class="brand-row">
+          ${session.companyLogo ? `<img src="${session.companyLogo}" alt="" class="brand-logo" />` : ""}
+          <span class="brand-business-name">${escapeHtml(session.companyName)}</span>
+        </div>
+        <span class="brand-powered-by">T-Tech Connect</span>
+      </div>`
+    : `<div class="brand">T-Tech Connect</div>`;
+
   container.innerHTML = `
     <div class="sidebar" id="sidebar">
       ${demoBanner}
-      <div class="brand">T-Tech Connect${session.companyName ? `<span class="brand-business">${escapeHtml(session.companyName)}</span>` : ""}</div>
+      ${brand}
       <nav>${sections}</nav>
       <div class="user-box">
         <div>${escapeHtml(session.fullName) || escapeHtml(session.username) || ""}</div>
