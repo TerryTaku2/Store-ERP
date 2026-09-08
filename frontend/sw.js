@@ -5,7 +5,12 @@
 // straight to the network — this is a live business app, a cached stock count
 // or sales total would be actively wrong, not just stale. Cross-origin requests
 // (the Chart.js / html5-qrcode CDN scripts) are left completely untouched.
-const STATIC_CACHE = "ttech-static-v1";
+//
+// Because it's stale-while-revalidate, a client with an old cached version
+// keeps serving it (updating only in the background) until this constant
+// changes — bump it whenever a JS/CSS/HTML edit needs to reach existing
+// installs promptly instead of waiting for their next natural cache refresh.
+const STATIC_CACHE = "ttech-static-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.add("/offline.html")));
