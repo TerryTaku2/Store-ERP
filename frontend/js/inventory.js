@@ -514,16 +514,18 @@
   document.getElementById("print-labels-btn").addEventListener("click", () => {
     const selected = products.filter((p) => selectedIds.has(p.id));
     if (selected.length === 0) return;
-    document.getElementById("print-labels-sheet").innerHTML = selected
-      .map(
-        (p) => `
+    document.getElementById("print-labels-sheet").innerHTML =
+      `<div style="grid-column:1/-1;">${printLetterheadHtml("Product Labels")}</div>` +
+      selected
+        .map(
+          (p) => `
           <div class="label">
             <div class="label-name">${escapeHtml(p.name)}</div>
             ${p.barcode ? `<div class="label-barcode">${escapeHtml(p.barcode)}</div>` : ""}
             <div class="label-price">${fmtMoney(p.sell_price)}</div>
           </div>`
-      )
-      .join("");
+        )
+        .join("");
     document.body.classList.add("printing-labels");
     window.print();
   });

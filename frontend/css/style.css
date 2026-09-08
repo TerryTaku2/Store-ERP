@@ -677,6 +677,26 @@ tr.low-stock td { color: var(--danger-text); font-weight: 600; }
 .receipt table td { border-bottom: 1px solid #f1f5f9; color: #1e293b; }
 .receipt .receipt-total { display: flex; justify-content: space-between; font-size: 1rem; font-weight: 700; margin-top: 8px; }
 
+/* Branded header for printed documents (receipt, reports, labels) — same
+   "hardcoded light-on-white regardless of theme" rule as .receipt above,
+   since this is meant to look right on paper, not in the app UI. */
+.print-letterhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #cbd5e1;
+}
+.print-letterhead img { width: 42px; height: 42px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background: #fff; }
+.print-letterhead-name { font-size: 16px; font-weight: 800; color: #0f172a; }
+.print-letterhead-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+/* Hidden on screen, shown only in print — for pages (like Reports) whose
+   normal on-screen header already has the sidebar's own branding, so this
+   would just be redundant clutter until the sidebar disappears for print. */
+.print-only { display: none; }
+
 /* ---------- Modal / camera scanner ---------- */
 
 .modal-overlay {
@@ -932,7 +952,19 @@ tr.low-stock td { color: var(--danger-text); font-weight: 600; }
 /* ---------- Print ---------- */
 
 @media print {
+  /* The app's theme colors are CSS custom properties, and switching to print
+     doesn't change which theme is "active" — without this, printing while on
+     Dark Engineering (the default) would render light-gray/white text on the
+     forced-white page background below, i.e. an unreadable printout. Pin
+     every theme's tokens to safe light-on-white values for print only. */
+  :root, :root[data-theme] {
+    --bg: #ffffff; --panel: #ffffff; --panel-raised: #f8fafc;
+    --border: #cbd5e1; --border-soft: #e2e8f0;
+    --text: #0f172a; --text-muted: #475569;
+  }
+
   .no-print { display: none !important; }
+  .print-only { display: block !important; }
   .sidebar, #sidebar-container, .menu-toggle, .sidebar-overlay { display: none !important; }
   .app-shell { display: block; }
   .main { padding: 0; margin: 0; }

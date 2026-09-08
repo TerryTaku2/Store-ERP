@@ -173,6 +173,24 @@ function escapeHtml(value) {
   return _escapeHtmlEl.innerHTML;
 }
 
+// Branded header (logo + business name) for printed documents — receipts,
+// reports, product labels — so a physical copy identifies the business even
+// though the app's own sidebar branding isn't part of the printout. Falls
+// back to the product name when a company hasn't set a business name yet.
+function printLetterheadHtml(subtitle) {
+  const session = getSession();
+  const name = session.companyName || "T-Tech Connect";
+  const logo = session.companyLogo ? `<img src="${session.companyLogo}" alt="" />` : "";
+  return `
+    <div class="print-letterhead">
+      ${logo}
+      <div>
+        <div class="print-letterhead-name">${escapeHtml(name)}</div>
+        ${subtitle ? `<div class="print-letterhead-sub">${escapeHtml(subtitle)}</div>` : ""}
+      </div>
+    </div>`;
+}
+
 function csvEscape(value) {
   const s = value === null || value === undefined ? "" : String(value);
   if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
@@ -181,9 +199,10 @@ function csvEscape(value) {
 
 // columns: [{ key, label }] — rows: array of plain objects
 function exportCSV(filename, columns, rows) {
+  const businessLine = csvEscape(getSession().companyName || "T-Tech Connect");
   const header = columns.map((c) => csvEscape(c.label)).join(",");
   const lines = rows.map((row) => columns.map((c) => csvEscape(row[c.key])).join(","));
-  const csv = [header, ...lines].join("\r\n");
+  const csv = [businessLine, "", header, ...lines].join("\r\n");
   const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

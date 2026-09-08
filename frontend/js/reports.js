@@ -3,6 +3,8 @@
   if (!session) return;
   renderSidebar("/reports.html");
 
+  document.getElementById("print-letterhead-slot").innerHTML = printLetterheadHtml("Business Report");
+
   const msgBox = document.getElementById("msg-box");
   let chart = null;
   let lastInventory = [];
