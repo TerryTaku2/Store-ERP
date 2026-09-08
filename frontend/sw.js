@@ -44,7 +44,11 @@ self.addEventListener("fetch", (event) => {
 
       if (cached) {
         // Update the cache for next time, but don't make this load wait on it.
-        networkFetch;
+        // waitUntil (not just letting the promise dangle) keeps the worker
+        // alive long enough for cache.put() to actually finish — otherwise
+        // the browser can kill the worker right after respondWith() resolves,
+        // silently dropping the revalidation.
+        event.waitUntil(networkFetch);
         return cached;
       }
 
