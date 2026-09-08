@@ -1,7 +1,15 @@
+import os
+
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./store.db"
+# Defaults to a file next to this module for local dev. In production, point
+# this at a file inside a mounted persistent disk (e.g. Render Disks) via the
+# DATABASE_PATH env var — container filesystems are otherwise ephemeral and
+# store.db resets on every redeploy. See README.md's Deployment section.
+DATABASE_PATH = os.path.abspath(os.environ.get("DATABASE_PATH", "./store.db"))
+os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}

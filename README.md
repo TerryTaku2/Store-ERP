@@ -45,7 +45,27 @@ what Render/Fly/Railway-style platforms expect.
 Set these environment variables in production:
 - `SECRET_KEY` — required. Any long random string; used to sign JWT login tokens.
   Without it the app falls back to an insecure default, fine for local dev only.
+- `DATABASE_PATH` — required for the database to survive a redeploy. See below.
 
-The database is a local SQLite file (`backend/store.db`). On most hosting
-platforms the filesystem is ephemeral, so it resets on every redeploy unless you
-attach a persistent disk mounted at the backend directory.
+### Persisting the database (Render Disks)
+
+The database is a local SQLite file. Container filesystems on Render (and
+similar platforms) are ephemeral — anything written to disk is lost on the
+next deploy — unless you attach a persistent disk.
+
+1. In the Render dashboard, open the service → **Disks** tab → **Add Disk**.
+2. Give it a name and size (1 GB is plenty for SQLite at small-business scale).
+3. Set **Mount Path** to something *outside* the app's code directory, e.g.
+   `/var/data` — do **not** mount it at `/app/backend` (where the Dockerfile
+   puts the code): a disk mount replaces that directory's contents, which
+   would hide the application code the image just built.
+4. Set the `DATABASE_PATH` env var to a file inside that mount, e.g.
+   `/var/data/store.db`. The app creates the file (and any missing parent
+   directories) automatically on startup — you don't need to create it
+   yourself.
+5. Redeploy. From then on, `store.db` lives on the disk and survives future
+   deploys instead of resetting.
+
+Without `DATABASE_PATH` set, the app falls back to a local file next to the
+code (`backend/store.db`), which is fine for local dev but gets wiped on
+every Render redeploy.
