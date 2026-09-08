@@ -19,6 +19,7 @@
     form.reset();
     document.getElementById("user-id").value = "";
     document.getElementById("username").disabled = false;
+    document.getElementById("base_salary").value = 0;
     formTitle.textContent = "Add User";
     passwordHint.textContent = "";
     document.getElementById("password").required = true;
@@ -31,6 +32,7 @@
     document.getElementById("username").disabled = true;
     document.getElementById("full_name").value = u.full_name;
     document.getElementById("role").value = u.role;
+    document.getElementById("base_salary").value = u.base_salary;
     document.getElementById("password").value = "";
     document.getElementById("password").required = false;
     passwordHint.textContent = "(leave blank to keep current password)";
@@ -51,6 +53,7 @@
         <td>${escapeHtml(u.username)}</td>
         <td>${escapeHtml(u.full_name)}</td>
         <td><span class="badge ${u.role}">${escapeHtml(u.role)}</span></td>
+        <td>${fmtMoney(u.base_salary)}</td>
         <td>${u.is_active ? "Active" : "Disabled"}</td>
         <td class="actions-cell">
           <button data-edit="${u.id}" class="secondary">Edit</button>
@@ -90,6 +93,7 @@
         const payload = {
           full_name: document.getElementById("full_name").value,
           role: document.getElementById("role").value,
+          base_salary: Number(document.getElementById("base_salary").value || 0),
         };
         if (password) payload.password = password;
         await api.put(`/users/${id}`, payload);
@@ -100,6 +104,7 @@
           username: document.getElementById("username").value,
           full_name: document.getElementById("full_name").value,
           role: document.getElementById("role").value,
+          base_salary: Number(document.getElementById("base_salary").value || 0),
           password,
         });
         showMsg("User created", "success");
@@ -118,6 +123,7 @@
         { key: "username", label: "Username" },
         { key: "full_name", label: "Full Name" },
         { key: "role", label: "Role" },
+        { key: "base_salary", label: "Base Salary" },
         { key: "status", label: "Status" },
       ],
       users.map((u) => ({ ...u, status: u.is_active ? "Active" : "Disabled" }))

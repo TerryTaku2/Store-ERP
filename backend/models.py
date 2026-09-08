@@ -18,12 +18,12 @@ from database import Base
 
 # Modules that can be individually enabled/disabled per branch by the administration
 # branch. Products/Inventory are always-on core functionality and not in this list.
-TOGGLE_MODULES = ["sales", "purchases", "expenses", "reports"]
+TOGGLE_MODULES = ["sales", "purchases", "expenses", "reports", "payroll"]
 
 # UI theme a user can pick for themselves, saved to their account (see auth.py's
 # PUT /auth/me/theme). Kept as an allowlist so an arbitrary string can never end
 # up in the theme column.
-VALID_THEMES = ["dark-engineering", "warm-minimal", "high-contrast"]
+VALID_THEMES = ["dark-engineering", "warm-minimal", "dark-rail", "high-contrast"]
 
 
 class Company(Base):
@@ -89,6 +89,7 @@ class User(Base):
     failed_login_attempts = Column(Integer, nullable=True, default=0)
     locked_until = Column(DateTime, nullable=True)
     theme = Column(String, nullable=True, default="dark-engineering")
+    base_salary = Column(Float, nullable=False, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -210,6 +211,58 @@ class Expense(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     recorded_by = relationship("User")
+
+
+class PayrollRun(Base):
+    __tablename__ = "payroll_runs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    branch_id = Column(Integer, ForeignKey("branches.id"), index=True, nullable=True)
+    period_start = Column(Date, nullable=False)
+    period_end = Column(Date, nullable=False)
+    status = Column(String, nullable=False, default="draft")  # draft, finalized, voided
+    total_amount = Column(Float, nullable=False, default=0)
+    expense_id = Column(Integer, ForeignKey("expenses.id"), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    finalized_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    finalized_at = Column(DateTime, nullable=True)
+    voided_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    voided_at = Column(DateTime, nullable=True)
+    void_reason = Column(String, nullable=True)
+
+    items = relationship("PayslipItem", back_populates="run", cascade="all, delete-orphan")
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    finalized_by = relationship("User", foreign_keys=[finalized_by_id])
+    voided_by = relationship("User", foreign_keys=[voided_by_id])
+
+    @property
+    def finalized_by_name(self):
+        return self.finalized_by.full_name if self.finalized_by else None
+
+    @property
+    def voided_by_name(self):
+        return self.voided_by.full_name if self.voided_by else None
+
+
+class PayslipItem(Base):
+    __tablename__ = "payslip_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    payroll_run_id = Column(Integer, ForeignKey("payroll_runs.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    base_salary = Column(Float, nullable=False, default=0)
+    bonus = Column(Float, nullable=False, default=0)
+    deductions = Column(Float, nullable=False, default=0)
+    net_pay = Column(Float, nullable=False, default=0)
+
+    run = relationship("PayrollRun", back_populates="items")
+    user = relationship("User")
+
+    @property
+    def user_name(self):
+        return self.user.full_name if self.user else None
 
 
 class InventoryMovement(Base):

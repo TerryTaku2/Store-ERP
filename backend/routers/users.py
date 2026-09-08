@@ -43,6 +43,7 @@ def create_user(
         full_name=payload.full_name,
         role=payload.role,
         is_active=payload.is_active,
+        base_salary=payload.base_salary,
         company_id=current_user.company_id,
         hashed_password=security.hash_password(payload.password),
     )
@@ -87,6 +88,9 @@ def update_user(
     if payload.is_active is not None and payload.is_active != user.is_active:
         changes.append(f"is_active: {user.is_active} → {payload.is_active}")
         user.is_active = payload.is_active
+    if payload.base_salary is not None and payload.base_salary != user.base_salary:
+        changes.append(f"base_salary: {user.base_salary} → {payload.base_salary}")
+        user.base_salary = payload.base_salary
     if payload.password:
         user.hashed_password = security.hash_password(payload.password)
         changes.append("password: changed")

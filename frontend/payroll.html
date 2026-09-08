@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="/icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="T-Tech Connect" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payroll · T-Tech Connect</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main">
+      <header>
+        <h1>Payroll</h1>
+      </header>
+
+      <div id="msg-box"></div>
+
+      <div class="panel hidden" id="new-run-panel">
+        <h3>Start New Payroll Run</h3>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:-6px;">
+          Generates a payslip for every active employee assigned to this branch, using each person's base salary.
+        </p>
+        <form id="new-run-form">
+          <div class="form-row">
+            <div class="field"><label>Period start</label><input id="period-start" type="date" required /></div>
+            <div class="field"><label>Period end</label><input id="period-end" type="date" required /></div>
+          </div>
+          <button type="submit">Generate Payroll</button>
+        </form>
+      </div>
+
+      <div class="panel hidden" id="draft-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>Draft Payroll Run <span id="draft-period" style="font-weight:normal;color:var(--text-muted);"></span></h3>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Employee</th><th>Base Salary</th><th>Bonus</th><th>Deductions</th><th>Net Pay</th></tr></thead>
+            <tbody id="draft-items-body"></tbody>
+          </table>
+        </div>
+        <p style="text-align:right;font-weight:700;margin-top:10px;">Total: <span id="draft-total"></span></p>
+        <div style="display:flex;gap:10px;">
+          <button type="button" id="finalize-run-btn">Finalize &amp; Record Expense</button>
+          <button type="button" class="danger" id="discard-run-btn">Discard Draft</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>Payroll History</h3>
+          <button type="button" class="secondary" id="export-payroll-btn">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Period</th><th>Employees</th><th>Total</th><th>Status</th><th></th></tr></thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="run-detail-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;" id="run-detail-title">Payroll Run</h3>
+        <button type="button" class="secondary" id="run-detail-close">Close</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Employee</th><th>Base Salary</th><th>Bonus</th><th>Deductions</th><th>Net Pay</th></tr></thead>
+          <tbody id="run-detail-body"></tbody>
+        </table>
+      </div>
+      <p id="run-detail-void-note" class="hidden" style="margin-top:10px;color:var(--text-muted);font-size:0.85rem;"></p>
+    </div>
+  </div>
+
+  <script src="/js/vendor/feather.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/payroll.js"></script>
+</body>
+</html>

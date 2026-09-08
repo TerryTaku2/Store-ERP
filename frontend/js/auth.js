@@ -17,6 +17,7 @@ const NAV_SECTIONS = [
     label: "Finance",
     links: [
       { href: "/expenses.html", label: "Expenses", icon: "credit-card", roles: ["admin", "manager"] },
+      { href: "/payroll.html", label: "Payroll", icon: "dollar-sign", roles: ["admin", "manager"] },
       { href: "/reports.html", label: "Reports", icon: "bar-chart-2", roles: ["admin", "manager"] },
     ],
   },
@@ -132,6 +133,7 @@ document.addEventListener("DOMContentLoaded", updateInstallUI);
 const THEME_OPTIONS = [
   { value: "dark-engineering", label: "Dark Engineering" },
   { value: "warm-minimal", label: "Warm Minimal" },
+  { value: "dark-rail", label: "Dark Rail" },
   { value: "high-contrast", label: "High Contrast" },
 ];
 

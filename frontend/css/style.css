@@ -127,6 +127,43 @@
   --primary-text: #1e3a8a;
 }
 
+/* ---- Dark Rail: near-black sidebar over a light workspace, in the style of
+   the transport-financial-system app — same content-area palette as Warm
+   Minimal, paired with Dark Engineering's sidebar. Accent stays this app's
+   blue rather than that app's maroon, per the "brand stays constant" rule
+   above. ---- */
+:root[data-theme="dark-rail"] {
+  --bg: #f1f5f9;
+  --panel: #ffffff;
+  --panel-raised: #f8fafc;
+  --border: #e2e8f0;
+  --border-soft: #f1f5f9;
+  --overlay-weak: rgba(15,23,42,.025);
+  --overlay-mid: rgba(15,23,42,.05);
+  --input-bg: #ffffff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+
+  --sidebar-bg: #16181a;
+  --sidebar-fg: #ffffff;
+  --sidebar-text: #94a3b8;
+  --sidebar-label: #475569;
+  --sidebar-hover: rgba(255,255,255,.05);
+  --sidebar-active-bg: rgba(37,99,235,.18);
+  --sidebar-active-text: #60a5fa;
+  --sidebar-border: #334155;
+  --sidebar-control-bg: #1f2937;
+
+  --success-text: #15803d;
+  --warning-text: #b45309;
+  --danger-text: #b91c1c;
+  --violet-text: #6d28d9;
+  --primary-text: #1d4ed8;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {

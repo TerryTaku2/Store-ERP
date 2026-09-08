@@ -9,7 +9,7 @@ from database import Base, engine, SessionLocal, run_auto_migrations
 import demo_data
 import models
 import provisioning
-from routers import auth, users, products, purchases, sales, expenses, reports, dashboard, audit, inventory, branches, companies, company_profile
+from routers import auth, users, products, purchases, sales, expenses, reports, dashboard, audit, inventory, branches, companies, company_profile, payroll
 
 Base.metadata.create_all(bind=engine)
 run_auto_migrations()
@@ -119,6 +119,7 @@ app.include_router(reports.router)
 app.include_router(dashboard.router)
 app.include_router(audit.router)
 app.include_router(inventory.router)
+app.include_router(payroll.router)
 
 mimetypes.add_type("application/manifest+json", ".webmanifest")
 

@@ -15,6 +15,7 @@
     { key: "sales", label: "Sales" },
     { key: "purchases", label: "Purchases" },
     { key: "expenses", label: "Expenses" },
+    { key: "payroll", label: "Payroll" },
     { key: "reports", label: "Reports" },
   ];
 

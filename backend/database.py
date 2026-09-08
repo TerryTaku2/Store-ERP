@@ -32,10 +32,19 @@ def run_auto_migrations():
                 continue
             existing_cols = {col["name"] for col in inspector.get_columns(table.name)}
             for column in table.columns:
-                if column.name in existing_cols:
-                    continue
-                col_type = column.type.compile(engine.dialect)
-                conn.execute(text(f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {col_type}'))
+                if column.name not in existing_cols:
+                    col_type = column.type.compile(engine.dialect)
+                    conn.execute(text(f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {col_type}'))
+                # ADD COLUMN leaves existing rows NULL regardless of the model's
+                # default, and that can linger across restarts once it's happened
+                # (the column now "exists" so this loop skips it) — so backfill
+                # unconditionally for any non-nullable column with a plain scalar
+                # default. Harmless no-op once no NULLs remain.
+                if not column.nullable and column.default is not None and getattr(column.default, "is_scalar", False):
+                    conn.execute(
+                        text(f'UPDATE "{table.name}" SET "{column.name}" = :default WHERE "{column.name}" IS NULL'),
+                        {"default": column.default.arg},
+                    )
 
         # products.sku was removed; drop the leftover column and its indexes from
         # existing databases (no-op on a fresh one that never had the column).

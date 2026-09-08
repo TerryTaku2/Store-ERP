@@ -99,6 +99,7 @@ class UserBase(BaseModel):
     full_name: str
     role: str = "cashier"
     is_active: bool = True
+    base_salary: float = 0
 
 
 class UserCreate(UserBase):
@@ -110,6 +111,7 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     is_active: Optional[bool] = None
     password: Optional[str] = None
+    base_salary: Optional[float] = None
 
 
 class UserOut(UserBase):
@@ -301,6 +303,50 @@ class ExpenseOut(ExpenseBase):
     id: int
     branch_id: Optional[int] = None
     created_at: datetime
+
+
+# ---------- Payroll ----------
+
+class PayslipItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    user_name: Optional[str] = None
+    base_salary: float
+    bonus: float
+    deductions: float
+    net_pay: float
+
+
+class PayslipItemUpdate(BaseModel):
+    bonus: Optional[float] = None
+    deductions: Optional[float] = None
+
+
+class PayrollRunCreate(BaseModel):
+    period_start: date
+    period_end: date
+
+
+class PayrollRunOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    branch_id: Optional[int] = None
+    period_start: date
+    period_end: date
+    status: str
+    total_amount: float
+    created_at: datetime
+    finalized_at: Optional[datetime] = None
+    finalized_by_name: Optional[str] = None
+    voided_at: Optional[datetime] = None
+    voided_by_name: Optional[str] = None
+    void_reason: Optional[str] = None
+    items: List[PayslipItemOut] = []
+
+
+class VoidPayrollRequest(BaseModel):
+    reason: Optional[str] = None
 
 
 # ---------- Audit Log ----------
