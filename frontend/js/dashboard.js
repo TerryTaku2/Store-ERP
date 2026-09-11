@@ -324,7 +324,7 @@
 
       document.getElementById("kpi-today-sales").textContent = fmtMoney(data.today_sales);
       document.getElementById("kpi-month-revenue").textContent = fmtMoney(data.month_revenue);
-      document.getElementById("kpi-month-expenses").textContent = fmtMoney(data.month_expenses);
+      document.getElementById("kpi-today-expenses").textContent = fmtMoney(data.today_expenses);
 
       const netProfitEl = document.getElementById("kpi-net-profit");
       netProfitEl.textContent = fmtMoney(data.month_net_profit);

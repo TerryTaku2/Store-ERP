@@ -62,6 +62,10 @@ def dashboard_summary(
         models.Expense.company_id == current_user.company_id,
         models.Expense.expense_date >= month_start,
     )
+    today_expenses_q = db.query(func.coalesce(func.sum(models.Expense.amount), 0.0)).filter(
+        models.Expense.company_id == current_user.company_id,
+        models.Expense.expense_date == today,
+    )
     low_stock_q = db.query(func.count(models.Product.id)).filter(
         models.Product.company_id == current_user.company_id,
         models.Product.quantity_on_hand <= models.Product.reorder_level,
@@ -100,6 +104,7 @@ def dashboard_summary(
         month_revenue_q = month_revenue_q.filter(models.Sale.branch_id == branch_filter)
         month_cogs_q = month_cogs_q.filter(models.Sale.branch_id == branch_filter)
         month_expenses_q = month_expenses_q.filter(models.Expense.branch_id == branch_filter)
+        today_expenses_q = today_expenses_q.filter(models.Expense.branch_id == branch_filter)
         low_stock_q = low_stock_q.filter(models.Product.branch_id == branch_filter)
         recent_sales_q = recent_sales_q.filter(models.Sale.branch_id == branch_filter)
         today_payment_breakdown_q = today_payment_breakdown_q.filter(models.Sale.branch_id == branch_filter)
@@ -111,6 +116,7 @@ def dashboard_summary(
     month_revenue = month_revenue_q.scalar()
     month_cogs = month_cogs_q.scalar()
     month_expenses = month_expenses_q.scalar()
+    today_expenses = today_expenses_q.scalar()
     month_net_profit = (month_revenue - month_cogs) - month_expenses
     low_stock_count = low_stock_q.scalar()
     recent_sales = recent_sales_q.order_by(models.Sale.created_at.desc()).limit(5).all()
@@ -127,6 +133,7 @@ def dashboard_summary(
         "today_sales": today_sales,
         "month_revenue": month_revenue,
         "month_expenses": month_expenses,
+        "today_expenses": today_expenses,
         "month_net_profit": month_net_profit,
         "low_stock_count": low_stock_count,
         "today_payment_breakdown": today_payment_breakdown,
