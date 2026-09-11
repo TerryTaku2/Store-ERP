@@ -16,7 +16,7 @@ router = APIRouter(
 
 
 def _with_items(query):
-    return query.options(joinedload(models.PayrollRun.items).joinedload(models.PayslipItem.user))
+    return query.options(joinedload(models.PayrollRun.items).joinedload(models.PayslipItem.employee))
 
 
 @router.get("", response_model=list[schemas.PayrollRunOut])
@@ -53,13 +53,12 @@ def create_payroll_run(
         )
 
     employees = (
-        db.query(models.User)
-        .join(models.UserBranch, models.UserBranch.user_id == models.User.id)
+        db.query(models.Employee)
         .filter(
-            models.UserBranch.branch_id == active_branch.id,
-            models.User.is_active.is_(True),
+            models.Employee.branch_id == active_branch.id,
+            models.Employee.is_active.is_(True),
         )
-        .order_by(models.User.full_name)
+        .order_by(models.Employee.full_name)
         .all()
     )
     if not employees:
@@ -81,7 +80,7 @@ def create_payroll_run(
         net_pay = employee.base_salary
         total += net_pay
         db.add(models.PayslipItem(
-            payroll_run_id=run.id, user_id=employee.id,
+            payroll_run_id=run.id, employee_id=employee.id,
             base_salary=employee.base_salary, bonus=0, deductions=0, net_pay=net_pay,
         ))
     run.total_amount = total

@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -73,3 +74,113 @@ def run_auto_migrations():
             conn.execute(
                 text('CREATE UNIQUE INDEX IF NOT EXISTS "uq_branches_company_code" ON "branches" ("company_id", "code")')
             )
+
+        # HR/payroll data (base_salary) used to live directly on User, and
+        # payslip_items.user_id pointed at users.id. Employee is now that record
+        # instead (see models.py), so backfill one Employee per existing User that
+        # doesn't have one yet, carrying over base_salary + their first branch,
+        # link the User to it, and remap that user's historical payslip_items rows
+        # onto the new employee. Runs once per user — a user that already has an
+        # employee_id is skipped, so this is a no-op on every later startup.
+        user_cols = {c["name"] for c in inspector.get_columns("users")} if inspector.has_table("users") else set()
+        if "employee_id" in user_cols and "base_salary" in user_cols and inspector.has_table("employees"):
+            payslip_cols = (
+                {c["name"] for c in inspector.get_columns("payslip_items")}
+                if inspector.has_table("payslip_items") else set()
+            )
+            unmigrated = conn.execute(
+                text('SELECT id, company_id, full_name, base_salary, is_active FROM "users" WHERE "employee_id" IS NULL')
+            ).fetchall()
+            for row in unmigrated:
+                branch_row = conn.execute(
+                    text('SELECT branch_id FROM "user_branches" WHERE user_id = :uid ORDER BY id LIMIT 1'),
+                    {"uid": row.id},
+                ).first()
+                result = conn.execute(
+                    text(
+                        'INSERT INTO "employees" (company_id, branch_id, full_name, base_salary, is_active, created_at) '
+                        'VALUES (:company_id, :branch_id, :full_name, :base_salary, :is_active, :created_at)'
+                    ),
+                    {
+                        "company_id": row.company_id,
+                        "branch_id": branch_row[0] if branch_row else None,
+                        "full_name": row.full_name,
+                        "base_salary": row.base_salary,
+                        "is_active": row.is_active,
+                        "created_at": datetime.utcnow(),
+                    },
+                )
+                employee_id = result.lastrowid
+                conn.execute(
+                    text('UPDATE "users" SET "employee_id" = :eid WHERE "id" = :uid'),
+                    {"eid": employee_id, "uid": row.id},
+                )
+                if "user_id" in payslip_cols:
+                    conn.execute(
+                        text('UPDATE "payslip_items" SET "employee_id" = :eid WHERE "user_id" = :uid'),
+                        {"eid": employee_id, "uid": row.id},
+                    )
+
+            # A payslip_items row can reference a user_id that no longer exists
+            # (the user was deleted after being paid) — the loop above only
+            # matches on live users, so those rows are still unmatched. Rather
+            # than lose that payroll history, park each one on a single
+            # per-company "Former Staff" placeholder employee instead.
+            if "user_id" in payslip_cols and "employee_id" in payslip_cols:
+                orphaned = conn.execute(
+                    text(
+                        'SELECT pi.id, pr.company_id FROM "payslip_items" pi '
+                        'JOIN "payroll_runs" pr ON pr.id = pi.payroll_run_id '
+                        'WHERE pi."employee_id" IS NULL'
+                    )
+                ).fetchall()
+                placeholder_by_company = {}
+                for item_id, company_id in orphaned:
+                    if company_id not in placeholder_by_company:
+                        existing = conn.execute(
+                            text(
+                                'SELECT id FROM "employees" WHERE full_name = \'Former Staff\' '
+                                'AND (company_id = :company_id OR (:company_id IS NULL AND company_id IS NULL))'
+                            ),
+                            {"company_id": company_id},
+                        ).first()
+                        if existing:
+                            placeholder_by_company[company_id] = existing[0]
+                        else:
+                            result = conn.execute(
+                                text(
+                                    'INSERT INTO "employees" (company_id, full_name, base_salary, is_active, created_at) '
+                                    'VALUES (:company_id, \'Former Staff\', 0, 0, :created_at)'
+                                ),
+                                {"company_id": company_id, "created_at": datetime.utcnow()},
+                            )
+                            placeholder_by_company[company_id] = result.lastrowid
+                    conn.execute(
+                        text('UPDATE "payslip_items" SET "employee_id" = :eid WHERE "id" = :item_id'),
+                        {"eid": placeholder_by_company[company_id], "item_id": item_id},
+                    )
+
+            # users.base_salary is superseded by employees.base_salary (carried
+            # over above) — drop the leftover column. Not part of any index/FK,
+            # so a plain DROP COLUMN (unlike payslip_items.user_id) is enough.
+            if "base_salary" in user_cols:
+                conn.execute(text('ALTER TABLE "users" DROP COLUMN "base_salary"'))
+
+        # payslip_items.user_id is superseded by employee_id (backfilled above) —
+        # drop the old NOT NULL column so new rows (which only set employee_id)
+        # can insert at all. SQLite can't DROP COLUMN a column that's part of a
+        # foreign key, so rebuild the table instead (same approach as the sku/
+        # users rebuilds elsewhere in this file). No-op once already dropped.
+        if inspector.has_table("payslip_items"):
+            payslip_cols = {c["name"] for c in inspector.get_columns("payslip_items")}
+            if "user_id" in payslip_cols:
+                payslip_table = Base.metadata.tables["payslip_items"]
+                col_names = ", ".join(f'"{c.name}"' for c in payslip_table.columns)
+                # Renaming the table doesn't rename its indexes — they'd collide by
+                # name with the ones the new table below creates for itself.
+                for idx in inspector.get_indexes("payslip_items"):
+                    conn.execute(text(f'DROP INDEX IF EXISTS "{idx["name"]}"'))
+                conn.execute(text('ALTER TABLE "payslip_items" RENAME TO "payslip_items_old"'))
+                payslip_table.create(conn)
+                conn.execute(text(f'INSERT INTO "payslip_items" ({col_names}) SELECT {col_names} FROM "payslip_items_old"'))
+                conn.execute(text('DROP TABLE "payslip_items_old"'))

@@ -60,7 +60,7 @@ def login(
             detail=f"Too many failed attempts. Account locked — try again in {minutes_left} minute(s).",
         )
 
-    if not user or not security.verify_password(form_data.password, user.hashed_password):
+    if not user or not user.hashed_password or not security.verify_password(form_data.password, user.hashed_password):
         if user:
             user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
             locked = False

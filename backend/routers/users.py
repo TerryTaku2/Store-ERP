@@ -13,6 +13,19 @@ router = APIRouter(
 )
 
 
+def _resolve_employee(db: Session, company_id: int, employee_id: int | None) -> models.Employee | None:
+    if employee_id is None:
+        return None
+    employee = db.query(models.Employee).filter(
+        models.Employee.id == employee_id, models.Employee.company_id == company_id
+    ).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    if employee.has_login:
+        raise HTTPException(status_code=400, detail="This employee already has a system login")
+    return employee
+
+
 @router.get("", response_model=list[schemas.UserOut])
 def list_users(
     db: Session = Depends(get_db),
@@ -37,70 +50,26 @@ def create_user(
         raise HTTPException(status_code=400, detail="Username already exists")
     if payload.role not in ("admin", "manager", "cashier"):
         raise HTTPException(status_code=400, detail="Invalid role")
+    employee = _resolve_employee(db, current_user.company_id, payload.employee_id)
 
     user = models.User(
         username=payload.username,
         full_name=payload.full_name,
         role=payload.role,
         is_active=payload.is_active,
-        base_salary=payload.base_salary,
         company_id=current_user.company_id,
         hashed_password=security.hash_password(payload.password),
+        employee_id=employee.id if employee else None,
     )
     db.add(user)
     db.flush()
-    # New users need at least one branch to log in; grant the branch they were created
-    # from (always HQ here) — additional branches can be granted via /api/branches.
+    # New logins need at least one branch to sign in; grant the branch they were
+    # created from (always HQ here) — additional branches can be granted via
+    # /api/branches.
     db.add(models.UserBranch(user_id=user.id, branch_id=active_branch.id))
     audit.log(
         db, "create", "user", user.id,
         summary=f"Created user '{user.username}' with role '{user.role}'",
-        user=current_user,
-    )
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-@router.post("/branch-staff", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
-def create_branch_staff(
-    payload: schemas.BranchStaffCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(security.require_role("admin")),
-):
-    """Register an employee for one of the company's other branches. Only
-    reachable from the admin (Head Office) branch, same as create_user — but
-    unlike create_user, the new account is granted that branch only, not HQ."""
-    branch = db.query(models.Branch).filter(
-        models.Branch.id == payload.branch_id,
-        models.Branch.company_id == current_user.company_id,
-        models.Branch.is_active.is_(True),
-    ).first()
-    if not branch:
-        raise HTTPException(status_code=404, detail="Branch not found")
-    if branch.is_admin:
-        raise HTTPException(status_code=400, detail="Use 'Add User' to register staff for the administration branch")
-
-    if db.query(models.User).filter(models.User.username == payload.username).first():
-        raise HTTPException(status_code=400, detail="Username already exists")
-    if payload.role not in ("admin", "manager", "cashier"):
-        raise HTTPException(status_code=400, detail="Invalid role")
-
-    user = models.User(
-        username=payload.username,
-        full_name=payload.full_name,
-        role=payload.role,
-        is_active=payload.is_active,
-        base_salary=payload.base_salary,
-        company_id=current_user.company_id,
-        hashed_password=security.hash_password(payload.password),
-    )
-    db.add(user)
-    db.flush()
-    db.add(models.UserBranch(user_id=user.id, branch_id=branch.id))
-    audit.log(
-        db, "create", "user", user.id,
-        summary=f"Created user '{user.username}' with role '{user.role}' for branch '{branch.name}'",
         user=current_user,
     )
     db.commit()
@@ -134,9 +103,10 @@ def update_user(
     if payload.is_active is not None and payload.is_active != user.is_active:
         changes.append(f"is_active: {user.is_active} → {payload.is_active}")
         user.is_active = payload.is_active
-    if payload.base_salary is not None and payload.base_salary != user.base_salary:
-        changes.append(f"base_salary: {user.base_salary} → {payload.base_salary}")
-        user.base_salary = payload.base_salary
+    if payload.employee_id is not None and payload.employee_id != user.employee_id:
+        employee = _resolve_employee(db, current_user.company_id, payload.employee_id)
+        changes.append(f"employee_id: {user.employee_id} → {employee.id if employee else None}")
+        user.employee_id = employee.id if employee else None
     if payload.password:
         user.hashed_password = security.hash_password(payload.password)
         changes.append("password: changed")

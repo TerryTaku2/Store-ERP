@@ -9,7 +9,7 @@ from database import Base, engine, SessionLocal, run_auto_migrations
 import demo_data
 import models
 import provisioning
-from routers import auth, users, products, purchases, sales, expenses, reports, dashboard, audit, inventory, branches, companies, company_profile, payroll
+from routers import auth, users, employees, products, purchases, sales, expenses, reports, dashboard, audit, inventory, branches, companies, company_profile, payroll
 
 Base.metadata.create_all(bind=engine)
 run_auto_migrations()
@@ -108,6 +108,7 @@ app = FastAPI(title="T-Tech Connect")
 
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(employees.router)
 app.include_router(branches.router)
 app.include_router(companies.router)
 app.include_router(company_profile.router)

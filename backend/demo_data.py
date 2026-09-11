@@ -102,6 +102,20 @@ def _upsert_user(db, company, username, full_name, role, password) -> models.Use
     return user
 
 
+def _link_employee(db, company, user, branch, position, base_salary) -> models.Employee:
+    """Give a demo login its own Employee/payroll record. Old rows are purged
+    by _reset_demo_data before this runs, so user.employee_id is always None
+    here — every reset creates a fresh one."""
+    employee = models.Employee(
+        company_id=company.id, branch_id=branch.id, full_name=user.full_name,
+        position=position, base_salary=base_salary, is_active=True,
+    )
+    db.add(employee)
+    db.flush()
+    user.employee_id = employee.id
+    return employee
+
+
 def _reset_demo_data(db, company, admin, manager, cashier, extra_hq_users=()):
     old_branch_ids = [
         row[0] for row in db.query(models.Branch.id).filter(models.Branch.company_id == company.id).all()
@@ -128,6 +142,20 @@ def _reset_demo_data(db, company, admin, manager, cashier, extra_hq_users=()):
         db.query(models.BranchModule).filter(
             models.BranchModule.branch_id.in_(old_branch_ids)
         ).delete(synchronize_session=False)
+        old_run_ids = [
+            r[0] for r in db.query(models.PayrollRun.id).filter(models.PayrollRun.branch_id.in_(old_branch_ids)).all()
+        ]
+        db.query(models.PayslipItem).filter(
+            models.PayslipItem.payroll_run_id.in_(old_run_ids)
+        ).delete(synchronize_session=False)
+        db.query(models.PayrollRun).filter(models.PayrollRun.branch_id.in_(old_branch_ids)).delete(synchronize_session=False)
+        old_employee_ids = [
+            r[0] for r in db.query(models.Employee.id).filter(models.Employee.branch_id.in_(old_branch_ids)).all()
+        ]
+        db.query(models.User).filter(models.User.employee_id.in_(old_employee_ids)).update(
+            {models.User.employee_id: None}, synchronize_session=False
+        )
+        db.query(models.Employee).filter(models.Employee.branch_id.in_(old_branch_ids)).delete(synchronize_session=False)
         db.query(models.Branch).filter(models.Branch.company_id == company.id).delete(synchronize_session=False)
     db.query(models.AuditLog).filter(models.AuditLog.company_id == company.id).delete(synchronize_session=False)
     db.flush()
@@ -150,6 +178,14 @@ def _reset_demo_data(db, company, admin, manager, cashier, extra_hq_users=()):
     for user in extra_hq_users:
         if user.id != admin.id:
             db.add(models.UserBranch(user_id=user.id, branch_id=hq.id))
+    db.flush()
+
+    # Payroll runs off Employee records, not User accounts — give each demo
+    # login its own HR/payroll twin so the Payroll module has something real
+    # to show, matching the branch each demo user is primarily based at.
+    _link_employee(db, company, admin, hq, "General Manager", 1200)
+    _link_employee(db, company, manager, riverside, "Branch Manager", 800)
+    _link_employee(db, company, cashier, riverside, "Cashier", 400)
     db.flush()
 
     _seed_branch(

@@ -99,16 +99,14 @@ class UserBase(BaseModel):
     full_name: str
     role: str = "cashier"
     is_active: bool = True
-    base_salary: float = 0
+    # Link to an existing Employee/HR record for this person, if they have one
+    # — optional, since plenty of logins (a platform admin, a login created
+    # before an Employee record existed) don't need one.
+    employee_id: Optional[int] = None
 
 
 class UserCreate(UserBase):
     password: str
-
-
-class BranchStaffCreate(UserBase):
-    password: str
-    branch_id: int
 
 
 class UserUpdate(BaseModel):
@@ -116,12 +114,44 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     is_active: Optional[bool] = None
     password: Optional[str] = None
-    base_salary: Optional[float] = None
+    employee_id: Optional[int] = None
 
 
 class UserOut(UserBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    created_at: datetime
+
+
+# ---------- Employees ----------
+
+class EmployeeBase(BaseModel):
+    full_name: str
+    position: Optional[str] = None
+    phone: Optional[str] = None
+    base_salary: float = 0
+    is_active: bool = True
+
+
+class EmployeeCreate(EmployeeBase):
+    branch_id: int
+
+
+class EmployeeUpdate(BaseModel):
+    full_name: Optional[str] = None
+    position: Optional[str] = None
+    phone: Optional[str] = None
+    base_salary: Optional[float] = None
+    is_active: Optional[bool] = None
+    branch_id: Optional[int] = None
+
+
+class EmployeeOut(EmployeeBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    branch_id: Optional[int] = None
+    branch_name: Optional[str] = None
+    has_login: bool = False
     created_at: datetime
 
 
@@ -315,8 +345,8 @@ class ExpenseOut(ExpenseBase):
 class PayslipItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    user_id: int
-    user_name: Optional[str] = None
+    employee_id: int
+    employee_name: Optional[str] = None
     base_salary: float
     bonus: float
     deductions: float

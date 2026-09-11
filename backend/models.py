@@ -75,6 +75,36 @@ class UserBranch(Base):
     branch = relationship("Branch")
 
 
+class Employee(Base):
+    """An employee/staff record — HR and payroll data for someone who works at a
+    branch. Deliberately independent of User (system login): most staff never
+    need to log in at all, and payroll runs off this table, not off accounts.
+    A User can optionally point at one via User.employee_id for staff who also
+    need app access."""
+    __tablename__ = "employees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    branch_id = Column(Integer, ForeignKey("branches.id"), index=True, nullable=True)
+    full_name = Column(String, nullable=False)
+    position = Column(String, nullable=True)  # free-text job title, e.g. "Cashier", "Cleaner"
+    phone = Column(String, nullable=True)
+    base_salary = Column(Float, nullable=False, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    branch = relationship("Branch")
+    login_account = relationship("User", back_populates="employee", uselist=False)
+
+    @property
+    def branch_name(self):
+        return self.branch.name if self.branch else None
+
+    @property
+    def has_login(self) -> bool:
+        return self.login_account is not None
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -89,8 +119,13 @@ class User(Base):
     failed_login_attempts = Column(Integer, nullable=True, default=0)
     locked_until = Column(DateTime, nullable=True)
     theme = Column(String, nullable=True, default="dark-engineering")
-    base_salary = Column(Float, nullable=False, default=0)
+    # Optional link to this person's HR/payroll record — most login accounts
+    # (e.g. a cashier who's also paid via Employee) will have one, but a
+    # platform admin or a login created before payroll existed may not.
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True, unique=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    employee = relationship("Employee", back_populates="login_account")
 
 
 class Product(Base):
@@ -251,18 +286,18 @@ class PayslipItem(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     payroll_run_id = Column(Integer, ForeignKey("payroll_runs.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
     base_salary = Column(Float, nullable=False, default=0)
     bonus = Column(Float, nullable=False, default=0)
     deductions = Column(Float, nullable=False, default=0)
     net_pay = Column(Float, nullable=False, default=0)
 
     run = relationship("PayrollRun", back_populates="items")
-    user = relationship("User")
+    employee = relationship("Employee")
 
     @property
-    def user_name(self):
-        return self.user.full_name if self.user else None
+    def employee_name(self):
+        return self.employee.full_name if self.employee else None
 
 
 class InventoryMovement(Base):
