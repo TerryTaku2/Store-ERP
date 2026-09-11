@@ -106,6 +106,11 @@ class UserCreate(UserBase):
     password: str
 
 
+class BranchStaffCreate(UserBase):
+    password: str
+    branch_id: int
+
+
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     role: Optional[str] = None

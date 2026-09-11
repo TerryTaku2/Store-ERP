@@ -130,5 +130,37 @@
     );
   });
 
+  const branchStaffForm = document.getElementById("branch-staff-form");
+
+  async function loadBranchOptions() {
+    const branches = await api.get("/branches");
+    const select = document.getElementById("bs-branch_id");
+    select.innerHTML = branches
+      .filter((b) => !b.is_admin)
+      .map((b) => `<option value="${b.id}">${escapeHtml(b.name)}</option>`)
+      .join("");
+  }
+
+  branchStaffForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await api.post("/users/branch-staff", {
+        username: document.getElementById("bs-username").value,
+        full_name: document.getElementById("bs-full_name").value,
+        branch_id: Number(document.getElementById("bs-branch_id").value),
+        role: document.getElementById("bs-role").value,
+        base_salary: Number(document.getElementById("bs-base_salary").value || 0),
+        password: document.getElementById("bs-password").value,
+      });
+      showMsg("Branch staff registered", "success");
+      branchStaffForm.reset();
+      document.getElementById("bs-base_salary").value = 0;
+      loadUsers();
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
+  });
+
   loadUsers().catch((err) => showMsg(err.message, "error"));
+  loadBranchOptions().catch((err) => showMsg(err.message, "error"));
 })();

@@ -62,6 +62,52 @@ def create_user(
     return user
 
 
+@router.post("/branch-staff", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
+def create_branch_staff(
+    payload: schemas.BranchStaffCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(security.require_role("admin")),
+):
+    """Register an employee for one of the company's other branches. Only
+    reachable from the admin (Head Office) branch, same as create_user — but
+    unlike create_user, the new account is granted that branch only, not HQ."""
+    branch = db.query(models.Branch).filter(
+        models.Branch.id == payload.branch_id,
+        models.Branch.company_id == current_user.company_id,
+        models.Branch.is_active.is_(True),
+    ).first()
+    if not branch:
+        raise HTTPException(status_code=404, detail="Branch not found")
+    if branch.is_admin:
+        raise HTTPException(status_code=400, detail="Use 'Add User' to register staff for the administration branch")
+
+    if db.query(models.User).filter(models.User.username == payload.username).first():
+        raise HTTPException(status_code=400, detail="Username already exists")
+    if payload.role not in ("admin", "manager", "cashier"):
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    user = models.User(
+        username=payload.username,
+        full_name=payload.full_name,
+        role=payload.role,
+        is_active=payload.is_active,
+        base_salary=payload.base_salary,
+        company_id=current_user.company_id,
+        hashed_password=security.hash_password(payload.password),
+    )
+    db.add(user)
+    db.flush()
+    db.add(models.UserBranch(user_id=user.id, branch_id=branch.id))
+    audit.log(
+        db, "create", "user", user.id,
+        summary=f"Created user '{user.username}' with role '{user.role}' for branch '{branch.name}'",
+        user=current_user,
+    )
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 @router.put("/{user_id}", response_model=schemas.UserOut)
 def update_user(
     user_id: int,
