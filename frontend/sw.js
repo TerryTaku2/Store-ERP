@@ -10,7 +10,7 @@
 // keeps serving it (updating only in the background) until this constant
 // changes — bump it whenever a JS/CSS/HTML edit needs to reach existing
 // installs promptly instead of waiting for their next natural cache refresh.
-const STATIC_CACHE = "ttech-static-v4";
+const STATIC_CACHE = "ttech-static-v5";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.add("/offline.html")));
