@@ -26,6 +26,7 @@ const NAV_SECTIONS = [
     links: [
       { href: "/business-profile.html", label: "Business Profile", icon: "image", roles: ["admin"] },
       { href: "/branches.html", label: "Branches", icon: "git-branch", roles: ["admin"], adminBranchOnly: true },
+      { href: "/employees.html", label: "Employees", icon: "users", roles: ["admin"], adminBranchOnly: true },
       { href: "/users.html", label: "User Management", icon: "settings", roles: ["admin"], adminBranchOnly: true },
       { href: "/audit-log.html", label: "Audit Log", icon: "activity", roles: ["admin"] },
       { href: "/companies.html", label: "Companies", icon: "briefcase", roles: ["admin"], platformAdminOnly: true },

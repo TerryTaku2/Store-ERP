@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="T-Tech Connect" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Users · T-Tech Connect</title>
+  <title>Employees · T-Tech Connect</title>
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
@@ -19,49 +19,42 @@
     <div id="sidebar-container"></div>
     <div class="main">
       <header>
-        <h1>User Management</h1>
+        <h1>Employees</h1>
       </header>
       <div class="card-sub" style="margin-bottom:16px;">
-        System logins for people who need to use the app. Registering staff for HR/payroll doesn't require a login — do that from <a href="/employees.html">Employees</a> instead, then optionally link them to a login here.
+        HR and payroll records for staff at any branch — no system login needed. Payroll pays everyone listed here. To give someone app access too, link them to an employee from <a href="/users.html">User Management</a>.
       </div>
 
       <div id="msg-box"></div>
 
       <div class="panel">
-        <h3 id="form-title">Add User</h3>
-        <form id="user-form">
-          <input type="hidden" id="user-id" />
+        <h3 id="form-title">Add Employee</h3>
+        <form id="employee-form">
+          <input type="hidden" id="employee-id" />
           <div class="form-row">
-            <div class="field"><label>Username</label><input id="username" required /></div>
             <div class="field"><label>Full Name</label><input id="full_name" required /></div>
+            <div class="field"><label>Position <span style="font-weight:normal;">(optional)</span></label><input id="position" placeholder="e.g. Cashier, Cleaner" /></div>
             <div class="field">
-              <label>Role</label>
-              <select id="role">
-                <option value="cashier">Cashier</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
-              </select>
+              <label>Branch</label>
+              <select id="branch_id" required></select>
             </div>
-            <div class="field"><label>Password <span id="password-hint" style="font-weight:normal;"></span></label><input id="password" type="password" /></div>
-            <div class="field">
-              <label>Link to Employee <span style="font-weight:normal;">(optional)</span></label>
-              <select id="employee_id"><option value="">— None —</option></select>
-            </div>
+            <div class="field"><label>Phone <span style="font-weight:normal;">(optional)</span></label><input id="phone" /></div>
+            <div class="field"><label>Base Salary</label><input id="base_salary" type="number" step="0.01" min="0" value="0" /></div>
           </div>
-          <button type="submit">Save User</button>
+          <button type="submit">Save Employee</button>
           <button type="button" class="secondary hidden" id="cancel-edit-btn">Cancel</button>
         </form>
       </div>
 
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <h3>All Users</h3>
-          <button type="button" class="secondary" id="export-users-btn">Export CSV</button>
+          <h3>All Employees</h3>
+          <button type="button" class="secondary" id="export-employees-btn">Export CSV</button>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>Linked Employee</th><th>Status</th><th></th></tr></thead>
-            <tbody id="users-body"></tbody>
+            <thead><tr><th>Full Name</th><th>Position</th><th>Branch</th><th>Base Salary</th><th>Status</th><th>System Access</th><th></th></tr></thead>
+            <tbody id="employees-body"></tbody>
           </table>
         </div>
       </div>
@@ -71,6 +64,6 @@
   <script src="/js/vendor/feather.min.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
-  <script src="/js/users.js"></script>
+  <script src="/js/employees.js"></script>
 </body>
 </html>

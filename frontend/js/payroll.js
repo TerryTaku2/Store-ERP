@@ -28,7 +28,7 @@
       .map(
         (it) => `
         <tr data-item-row="${it.id}">
-          <td>${escapeHtml(it.user_name || `#${it.user_id}`)}</td>
+          <td>${escapeHtml(it.employee_name || `#${it.employee_id}`)}</td>
           <td>${fmtMoney(it.base_salary)}</td>
           <td>${
             editable

@@ -83,11 +83,11 @@ def run_auto_migrations():
         # onto the new employee. Runs once per user — a user that already has an
         # employee_id is skipped, so this is a no-op on every later startup.
         user_cols = {c["name"] for c in inspector.get_columns("users")} if inspector.has_table("users") else set()
+        payslip_cols = (
+            {c["name"] for c in inspector.get_columns("payslip_items")}
+            if inspector.has_table("payslip_items") else set()
+        )
         if "employee_id" in user_cols and "base_salary" in user_cols and inspector.has_table("employees"):
-            payslip_cols = (
-                {c["name"] for c in inspector.get_columns("payslip_items")}
-                if inspector.has_table("payslip_items") else set()
-            )
             unmigrated = conn.execute(
                 text('SELECT id, company_id, full_name, base_salary, is_active FROM "users" WHERE "employee_id" IS NULL')
             ).fetchall()
@@ -121,50 +121,62 @@ def run_auto_migrations():
                         {"eid": employee_id, "uid": row.id},
                     )
 
-            # A payslip_items row can reference a user_id that no longer exists
-            # (the user was deleted after being paid) — the loop above only
-            # matches on live users, so those rows are still unmatched. Rather
-            # than lose that payroll history, park each one on a single
-            # per-company "Former Staff" placeholder employee instead.
-            if "user_id" in payslip_cols and "employee_id" in payslip_cols:
-                orphaned = conn.execute(
-                    text(
-                        'SELECT pi.id, pr.company_id FROM "payslip_items" pi '
-                        'JOIN "payroll_runs" pr ON pr.id = pi.payroll_run_id '
-                        'WHERE pi."employee_id" IS NULL'
-                    )
-                ).fetchall()
-                placeholder_by_company = {}
-                for item_id, company_id in orphaned:
-                    if company_id not in placeholder_by_company:
-                        existing = conn.execute(
-                            text(
-                                'SELECT id FROM "employees" WHERE full_name = \'Former Staff\' '
-                                'AND (company_id = :company_id OR (:company_id IS NULL AND company_id IS NULL))'
-                            ),
-                            {"company_id": company_id},
-                        ).first()
-                        if existing:
-                            placeholder_by_company[company_id] = existing[0]
-                        else:
-                            result = conn.execute(
-                                text(
-                                    'INSERT INTO "employees" (company_id, full_name, base_salary, is_active, created_at) '
-                                    'VALUES (:company_id, \'Former Staff\', 0, 0, :created_at)'
-                                ),
-                                {"company_id": company_id, "created_at": datetime.utcnow()},
-                            )
-                            placeholder_by_company[company_id] = result.lastrowid
-                    conn.execute(
-                        text('UPDATE "payslip_items" SET "employee_id" = :eid WHERE "id" = :item_id'),
-                        {"eid": placeholder_by_company[company_id], "item_id": item_id},
-                    )
-
             # users.base_salary is superseded by employees.base_salary (carried
             # over above) — drop the leftover column. Not part of any index/FK,
             # so a plain DROP COLUMN (unlike payslip_items.user_id) is enough.
             if "base_salary" in user_cols:
                 conn.execute(text('ALTER TABLE "users" DROP COLUMN "base_salary"'))
+
+        # A payslip_items row can reference a user_id that no longer exists (the
+        # user was deleted after being paid) — the per-user loop above only
+        # matches on live users, so those rows are still unmatched. Rather than
+        # lose that payroll history, park each one on a single per-company
+        # "Former Staff" placeholder employee instead. This runs unconditionally
+        # (not only while the User->Employee migration guard above is active):
+        # once users.base_salary is dropped, that guard is permanently False on
+        # every later startup, but a payslip_items row can still end up with a
+        # NULL employee_id from an earlier partial migration — and the NOT NULL
+        # rebuild below needs every row fixed up regardless of when it appeared.
+        if inspector.has_table("employees") and "employee_id" in payslip_cols:
+            # LEFT JOIN, not JOIN: a payslip_items row can also be doubly
+            # orphaned — its payroll_run_id pointing at a payroll_runs row that
+            # no longer exists (deleted outside the ORM's cascade). An inner
+            # join would silently drop those rows here, leaving their
+            # employee_id NULL forever and crashing the NOT NULL rebuild below.
+            # The placeholder lookup already handles company_id being NULL for
+            # exactly this case.
+            orphaned = conn.execute(
+                text(
+                    'SELECT pi.id, pr.company_id FROM "payslip_items" pi '
+                    'LEFT JOIN "payroll_runs" pr ON pr.id = pi.payroll_run_id '
+                    'WHERE pi."employee_id" IS NULL'
+                )
+            ).fetchall()
+            placeholder_by_company = {}
+            for item_id, company_id in orphaned:
+                if company_id not in placeholder_by_company:
+                    existing = conn.execute(
+                        text(
+                            'SELECT id FROM "employees" WHERE full_name = \'Former Staff\' '
+                            'AND (company_id = :company_id OR (:company_id IS NULL AND company_id IS NULL))'
+                        ),
+                        {"company_id": company_id},
+                    ).first()
+                    if existing:
+                        placeholder_by_company[company_id] = existing[0]
+                    else:
+                        result = conn.execute(
+                            text(
+                                'INSERT INTO "employees" (company_id, full_name, base_salary, is_active, created_at) '
+                                'VALUES (:company_id, \'Former Staff\', 0, 0, :created_at)'
+                            ),
+                            {"company_id": company_id, "created_at": datetime.utcnow()},
+                        )
+                        placeholder_by_company[company_id] = result.lastrowid
+                conn.execute(
+                    text('UPDATE "payslip_items" SET "employee_id" = :eid WHERE "id" = :item_id'),
+                    {"eid": placeholder_by_company[company_id], "item_id": item_id},
+                )
 
         # payslip_items.user_id is superseded by employee_id (backfilled above) —
         # drop the old NOT NULL column so new rows (which only set employee_id)
@@ -172,7 +184,6 @@ def run_auto_migrations():
         # foreign key, so rebuild the table instead (same approach as the sku/
         # users rebuilds elsewhere in this file). No-op once already dropped.
         if inspector.has_table("payslip_items"):
-            payslip_cols = {c["name"] for c in inspector.get_columns("payslip_items")}
             if "user_id" in payslip_cols:
                 payslip_table = Base.metadata.tables["payslip_items"]
                 col_names = ", ".join(f'"{c.name}"' for c in payslip_table.columns)
