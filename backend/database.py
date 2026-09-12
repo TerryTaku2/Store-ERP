@@ -34,8 +34,17 @@ def run_auto_migrations():
     create_all() only creates missing tables, not missing columns on tables that
     already exist, so this keeps an existing store.db in sync as the models evolve.
     """
-    inspector = inspect(engine)
     with engine.begin() as conn:
+        # Bound to conn (not engine): inspect(engine) would check out a
+        # *separate* pooled connection for every reflection call, and SQLite's
+        # rollback-journal isolation hides this transaction's uncommitted
+        # ALTER/CREATE/DROP statements from any other connection. Binding to
+        # conn makes every has_table()/get_columns() call below see this
+        # function's own writes immediately (e.g. a column ADD'd earlier in
+        # this same run), instead of the schema as it looked before this call
+        # started — a real prior bug: a guard checking a just-added column
+        # would see it as still missing and skip logic it should have run.
+        inspector = inspect(conn)
         for table in Base.metadata.sorted_tables:
             if not inspector.has_table(table.name):
                 continue
